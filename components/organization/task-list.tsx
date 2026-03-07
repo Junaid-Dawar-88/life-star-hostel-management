@@ -129,7 +129,14 @@ export default function TaskList() {
           </TableHeader>
 
           <TableBody>
-            {paginatedTasks.map((task) => (
+            {paginatedTasks.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-3 text-xl">
+                no task yet
+              </TableCell>
+            </TableRow>
+          ) : (
+             paginatedTasks.map((task) => (
               <TableRow key={task.id} className="hover:bg-muted/50">
 
                 <TableCell className="font-medium">
@@ -180,36 +187,33 @@ export default function TaskList() {
 
                     <DropdownMenuContent align="end">
 
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setEditingTask(task);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        Edit
-                      </DropdownMenuItem>
+  <DropdownMenuItem
+    onClick={() => {
+      setEditingTask(task);
+      setIsEditModalOpen(true);
+    }}
+  >
+    Edit
+  </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              "Are you sure you want to delete this task?"
-                            )
-                          ) {
-                            deleteTask.mutate({ id: task.id });
-                          }
-                        }}
-                      >
-                        Delete
-                      </DropdownMenuItem>
+  <DropdownMenuItem
+    className="text-red-600"
+    disabled={deleteTask.isPending}
+    onClick={() => {
+      if (confirm("Are you sure you want to delete this task?")) {
+        deleteTask.mutate({ id: task.id });
+      }
+    }}
+  >
+    {deleteTask.isPending ? "Deleting..." : "Delete"}
+  </DropdownMenuItem>
 
-                    </DropdownMenuContent>
+</DropdownMenuContent>
                   </DropdownMenu>
 
                 </TableCell>
               </TableRow>
-            ))}
+            )) ) } 
           </TableBody>
         </Table>
       </div>
