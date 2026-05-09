@@ -22,8 +22,9 @@ export default async function DashboardIndexPage(): Promise<React.JSX.Element> {
 
 	// Onboarding complete but no active org in session — auto-activate the first org
 	const orgs = await getOrganizationList();
-	if (orgs.length > 0) {
-		return <AutoActivateOrg orgId={orgs[0].id} />;
+	const firstOrg = orgs[0];
+	if (firstOrg) {
+		return <AutoActivateOrg orgId={firstOrg.id} />;
 	}
 
 	// User has no organizations at all — go through onboarding to create one

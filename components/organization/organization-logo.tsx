@@ -25,7 +25,10 @@ export function OrganizationLogo({
 	const signedUrl = useStorage(src);
 	return (
 		<Avatar className={cn("size-8 rounded-md group-focus:ring-2", className)}>
-			<AvatarImage className="rounded-md" src={signedUrl ?? undefined} />
+			<AvatarImage
+				className="rounded-md object-cover"
+				src={signedUrl ?? "/logo.jpeg"}
+			/>
 			<AvatarFallback
 				className={cn(
 					"rounded-md bg-neutral-200 dark:bg-neutral-700",

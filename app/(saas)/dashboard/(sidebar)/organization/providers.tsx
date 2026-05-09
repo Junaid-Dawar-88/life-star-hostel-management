@@ -3,6 +3,7 @@
 import type * as React from "react";
 import { ActiveOrganizationProvider } from "@/components/active-organization-provider";
 import type { getOrganizationById } from "@/lib/auth/server";
+import { HostelProvider } from "@/lib/hostel-context";
 
 export function OrganizationProviders({
 	organization,
@@ -12,7 +13,7 @@ export function OrganizationProviders({
 }>): React.JSX.Element {
 	return (
 		<ActiveOrganizationProvider organization={organization}>
-			{children}
+			<HostelProvider>{children}</HostelProvider>
 		</ActiveOrganizationProvider>
 	);
 }

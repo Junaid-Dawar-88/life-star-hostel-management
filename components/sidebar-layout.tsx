@@ -45,7 +45,18 @@ export function SidebarLayout({
 					</SidebarFooter>
 					<SidebarRail />
 				</Sidebar>
-				<SidebarInset id="skip" className="size-full overflow-hidden">
+				<SidebarInset id="skip" className="relative size-full overflow-hidden">
+					{/* Logo watermark */}
+					<div
+						aria-hidden
+						className="pointer-events-none absolute inset-0 flex items-center justify-center"
+					>
+						<img
+							src="/logo.jpeg"
+							alt=""
+							className="h-[420px] w-[420px] rounded-full object-cover opacity-[0.02] select-none"
+						/>
+					</div>
 					{children}
 				</SidebarInset>
 			</SidebarProvider>

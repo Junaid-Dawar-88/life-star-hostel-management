@@ -99,6 +99,7 @@ enum UserRole {
 }
 
 
+
 enum TaskStatus {
   todo
   inProgress @map("in_progress")
@@ -380,7 +381,9 @@ model Organization {
     creditBalance           CreditBalance?
     creditTransactions      CreditTransaction[]
     creditDeductionFailures CreditDeductionFailure[]
-     tasks Task[]
+    tasks                   Task[]
+    rooms                   Room[]
+    students                Student[]
     @@unique([slug], map: "organization_slug_idx")
     @@index([name], map: "organization_name_idx")
     @@index([stripeCustomerId], map: "organization_stripe_customer_id_idx")
@@ -547,4 +550,50 @@ model Task {
   @@index([assignedToId], map: "task_assigned_to_id_idx")
   @@index([organizationId, status], map: "task_org_status_idx")
   @@map("task")
+}
+
+model Room {
+    id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    organizationId String @map("organization_id") @db.Uuid
+    name           String @db.Text
+    seatType       String @map("seat_type") @db.Text
+    floor          Int
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    students     Student[]
+
+    @@index([organizationId], map: "room_organization_id_idx")
+    @@index([floor], map: "room_floor_idx")
+    @@index([organizationId, floor], map: "room_org_floor_idx")
+    @@map("room")
+}
+
+model Student {
+    id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    organizationId String  @map("organization_id") @db.Uuid
+    roomId         String  @map("room_id") @db.Uuid
+    name           String  @db.Text
+    fatherName     String  @map("father_name") @db.Text
+    nic            String  @db.Text
+    phone          String  @db.Text
+    guardianPhone  String  @map("guardian_phone") @db.Text
+    address        String  @db.Text
+    fee            Int     @default(0)
+    remainingFee   Int     @default(0) @map("remaining_fee")
+    picture        String? @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    room         Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+    @@index([organizationId], map: "student_organization_id_idx")
+    @@index([roomId], map: "student_room_id_idx")
+    @@index([nic], map: "student_nic_idx")
+    @@index([organizationId, roomId], map: "student_org_room_idx")
+    @@map("student")
 }

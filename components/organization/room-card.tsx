@@ -37,6 +37,7 @@ export type RoomCardProps = {
 	name: string;
 	seatType: SeatType;
 	floor: Floor;
+	onView?: () => void;
 	onEdit?: () => void;
 	onDelete?: (id: string) => void;
 };
@@ -60,6 +61,7 @@ export function RoomCard({
 	name,
 	seatType,
 	floor,
+	onView,
 	onEdit,
 	onDelete,
 }: RoomCardProps) {
@@ -90,7 +92,13 @@ export function RoomCard({
 				</AlertDialogContent>
 			</AlertDialog>
 
-			<div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+			<div
+				role="button"
+				tabIndex={0}
+				onClick={onView}
+				onKeyDown={(e) => e.key === "Enter" && onView?.()}
+				className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+			>
 				{/* Accent stripe */}
 				<div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-amber-400 via-orange-400 to-amber-500" />
 

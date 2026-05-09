@@ -1,19 +1,32 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { Plus } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useHostel } from "@/lib/hostel-context";
 import { RoomCard } from "./room-card";
 import { type RoomData, RoomModal } from "./room-modal";
+import { StudentRoomModal } from "./student-room";
 
 export function Rooms() {
-	const [rooms, setRooms] = useState<RoomData[]>([]);
+	const { rooms, addRoom, updateRoom, deleteRoom } = useHostel();
+	const [search, setSearch] = useState("");
+
+	const filteredRooms = rooms.filter((room) => {
+		const q = search.toLowerCase();
+		return (
+			room.name.toLowerCase().includes(q) ||
+			room.floor.includes(q) ||
+			room.seatType.replace(/_/g, " ").includes(q)
+		);
+	});
 
 	const openCreate = () => {
 		NiceModal.show(RoomModal, {
 			onSuccess: (data) => {
-				setRooms((prev) => [...prev, data]);
+				addRoom(data);
 			},
 		});
 	};
@@ -22,15 +35,17 @@ export function Rooms() {
 		NiceModal.show(RoomModal, {
 			room,
 			onSuccess: (updated) => {
-				setRooms((prev) =>
-					prev.map((r) => (r.id === updated.id ? updated : r)),
-				);
+				updateRoom(updated);
 			},
 		});
 	};
 
+	const openView = (room: RoomData) => {
+		NiceModal.show(StudentRoomModal, { room });
+	};
+
 	const handleDelete = (id: string) => {
-		setRooms((prev) => prev.filter((r) => r.id !== id));
+		deleteRoom(id);
 	};
 
 	return (
@@ -48,6 +63,26 @@ export function Rooms() {
 				</Button>
 			</div>
 
+			<div className="relative">
+				<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+				<Input
+					placeholder="Search by room name, floor, or seat type…"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					className="pl-9 pr-9"
+				/>
+				{search && (
+					<button
+						type="button"
+						onClick={() => setSearch("")}
+						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+					>
+						<X className="h-4 w-4" />
+						<span className="sr-only">Clear search</span>
+					</button>
+				)}
+			</div>
+
 			{rooms.length === 0 ? (
 				<div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
 					<p className="text-sm font-medium text-muted-foreground">
@@ -57,12 +92,23 @@ export function Rooms() {
 						Click "Add Room" to create your first room.
 					</p>
 				</div>
+			) : filteredRooms.length === 0 ? (
+				<div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+					<Search className="mb-3 h-8 w-8 text-muted-foreground/40" />
+					<p className="text-sm font-medium text-muted-foreground">
+						No rooms match "{search}"
+					</p>
+					<p className="mt-1 text-xs text-muted-foreground">
+						Try a different room name, floor number, or seat type.
+					</p>
+				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{rooms.map((room) => (
+					{filteredRooms.map((room) => (
 						<RoomCard
 							key={room.id}
 							{...room}
+							onView={() => openView(room)}
 							onEdit={() => openEdit(room)}
 							onDelete={handleDelete}
 						/>

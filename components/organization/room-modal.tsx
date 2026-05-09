@@ -2,7 +2,7 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import {
@@ -36,10 +36,10 @@ import { useZodForm } from "@/hooks/use-zod-form";
 const roomSchema = z.object({
 	name: z.string().min(1, "Room name is required"),
 	seatType: z.enum(["1_seater", "2_seater", "3_seater", "4_seater"], {
-		required_error: "Seat type is required",
+		error: "Seat type is required",
 	}),
 	floor: z.enum(["1", "2", "3", "4", "5", "6", "7", "8"], {
-		required_error: "Floor is required",
+		error: "Floor is required",
 	}),
 });
 
