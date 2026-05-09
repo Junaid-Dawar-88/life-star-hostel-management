@@ -13,7 +13,11 @@
 			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\components\\\\ai\" -ErrorAction SilentlyContinue)",
 			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\\\\\\(sidebar\\)\\\\organization\\\\chatbot\" -ErrorAction SilentlyContinue)",
 			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\api\\\\ai\" -ErrorAction SilentlyContinue)",
-			"Bash(Remove-Item -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\trpc\\\\routers\\\\organization\\\\organization-ai-router.ts\" -ErrorAction SilentlyContinue)"
+			"Bash(Remove-Item -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\trpc\\\\routers\\\\organization\\\\organization-ai-router.ts\" -ErrorAction SilentlyContinue)",
+			"Bash(Start-Sleep -Seconds 15)",
+			"Bash(Get-Content \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--PROJECTS-life-star-hostel-hostel-management-life-star-hostel-management\\\\afd6d4d0-0aa2-4df3-96d7-79500745997c\\\\tasks\\\\bg88brabe.output\" -Raw)",
+			"Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard/organization/settings/profile)",
+			"Bash(npx biome *)"
 		]
 	}
 }

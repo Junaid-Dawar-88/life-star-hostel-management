@@ -73,7 +73,7 @@ export function OrganizationMenuItems(): React.JSX.Element {
 			label: "Settings",
 			items: [
 				{
-					label: "General",
+					label: "Settings",
 					href: `${basePath}/settings`,
 					icon: SettingsIcon,
 				},

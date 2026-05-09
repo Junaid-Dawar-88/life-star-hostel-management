@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import type * as React from "react";
+import { OnboardingOrganizationStep } from "@/components/onboarding/onboarding-organization-step";
 import { OnboardingProfileStep } from "@/components/onboarding/onboarding-profile-step";
 import {
 	Card,
@@ -36,9 +37,20 @@ export function OnboardingCard(): React.JSX.Element {
 		router.replace(redirectTo ?? "/dashboard");
 	};
 
+	const goToStep = (step: number) => {
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("step", String(step));
+		router.replace(`?${params.toString()}`);
+	};
+
 	const steps = [
 		{
-			component: <OnboardingProfileStep onCompleted={() => onCompleted()} />,
+			component: <OnboardingProfileStep onCompleted={() => goToStep(2)} />,
+		},
+		{
+			component: (
+				<OnboardingOrganizationStep onCompleted={() => onCompleted()} />
+			),
 		},
 	];
 
