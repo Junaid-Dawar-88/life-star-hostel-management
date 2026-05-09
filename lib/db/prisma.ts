@@ -5,7 +5,8 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
 function createPrismaClient() {
-	const connectionString = process.env.DATABASE_URL;
+	const connectionString =
+		process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 	if (!connectionString) {
 		throw new Error("DATABASE_URL is required to initialize PrismaClient");
 	}
@@ -16,14 +17,40 @@ function createPrismaClient() {
 
 	const pool = new Pool({
 		connectionString,
+		connectionTimeoutMillis: 30000,
 		...(safeSchema
 			? { options: `-c search_path=${safeSchema},public` }
 			: undefined),
 	});
 
-	return new PrismaClient({
+	const client = new PrismaClient({
 		adapter: new PrismaPg(pool),
 	});
+
+	// Neon cold starts can exceed Prisma's default 5s transaction timeout.
+	// Wrap $transaction to use a 30s timeout globally.
+	const original$transaction = client.$transaction.bind(client);
+	(client as { $transaction: unknown }).$transaction = (
+		fnOrQueries: unknown,
+		options?: Record<string, unknown>,
+	) => {
+		if (typeof fnOrQueries === "function") {
+			return original$transaction(
+				fnOrQueries as Parameters<typeof original$transaction>[0],
+				{
+					timeout: 30000,
+					maxWait: 15000,
+					...options,
+				},
+			);
+		}
+		return (original$transaction as (q: unknown, o?: unknown) => unknown)(
+			fnOrQueries,
+			options,
+		);
+	};
+
+	return client;
 }
 
 declare global {

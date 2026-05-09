@@ -1,26 +1,17 @@
 "use client";
 
-import NiceModal from "@ebay/nice-modal-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-	CheckIcon,
-	ChevronsUpDownIcon,
-	PlusIcon,
-	ShieldIcon,
-} from "lucide-react";
+import { CheckIcon, ChevronsUpDownIcon, ShieldIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { CreateOrganizationModal } from "@/components/organization/create-organization-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
-import { Button } from "@/components/ui/button";
 import {
 	Command,
 	CommandGroup,
 	CommandInput,
 	CommandItem,
 	CommandList,
-	CommandSeparator,
 } from "@/components/ui/command";
 import {
 	Popover,
@@ -36,7 +27,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PersonalAccountAvatar } from "@/components/user/personal-account-avatar";
-import { appConfig } from "@/config/app.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
@@ -104,25 +94,6 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 		} catch (error) {
 			// Log the error for debugging but don't expose details to user
 			console.error("Failed to switch organization:", error);
-			// Keep popover open so user can retry
-			return;
-		}
-		setOpen(false);
-	};
-
-	const handleSelectPersonalAccount = async () => {
-		try {
-			// Unset the active organization
-			await authClient.organization.setActive({
-				organizationId: null,
-			});
-			// Clear only organization-scoped queries when leaving organization context
-			// while preserving user-level queries to avoid flickering
-			clearOrganizationScopedQueries(queryClient);
-			router.replace("/dashboard");
-		} catch (error) {
-			// Log the error for debugging but don't expose details to user
-			console.error("Failed to switch to personal account:", error);
 			// Keep popover open so user can retry
 			return;
 		}
@@ -218,21 +189,9 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 						<Command onValueChange={setSelectedValue} value={selectedValue}>
 							<CommandInput className="h-9" placeholder="Search..." />
 							<CommandList>
-								<CommandGroup>
-									<CommandItem
-										className="cursor-pointer"
-										onSelect={handleSelectPersonalAccount}
-										value={user.id}
-									>
-										<PersonalAccountAvatar className="size-5 shrink-0" />
-										<span className="mr-2">Personal</span>
-										<Icon type="personal" />
-									</CommandItem>
-								</CommandGroup>
 								{Array.isArray(allOrganizations) &&
 									allOrganizations.length > 0 && (
 										<>
-											<CommandSeparator />
 											<CommandGroup
 												heading={`Your Organizations (${allOrganizations.length})`}
 											>
@@ -303,23 +262,6 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 												/>
 											</div>
 										</Link>
-									</Button>
-								</>
-							)}
-							{appConfig.organizations.allowUserCreation && (
-								<>
-									<Separator />
-									<Button
-										className="h-8 w-full justify-start gap-1.5 font-normal text-sm"
-										onClick={() => {
-											NiceModal.show(CreateOrganizationModal);
-											setOpen(false);
-										}}
-										size="sm"
-										variant="ghost"
-									>
-										<PlusIcon className="size-5 shrink-0" />
-										<span>Create an Organization</span>
 									</Button>
 								</>
 							)}

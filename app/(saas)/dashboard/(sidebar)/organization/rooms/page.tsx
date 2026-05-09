@@ -1,40 +1,30 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import type { JSX } from "react";
-import { AiChat } from "@/components/ai/ai-chat";
+import type * as React from "react";
+import { Rooms } from "@/components/organization/rooms";
 import {
 	Page,
 	PageBody,
 	PageBreadcrumb,
+	PageContent,
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
-	title: "AI Chatbot",
+	title: "Rooms",
 };
 
-export default async function ChatbotPage(): Promise<JSX.Element> {
+export default async function RoomPage(): Promise<React.JSX.Element> {
 	const session = await getSession();
-
-	if (!session) {
-		redirect("/auth/sign-in");
-	}
-
-	const activeOrganizationId = session.session.activeOrganizationId;
-	if (!activeOrganizationId) {
+	if (!session?.session.activeOrganizationId) {
 		redirect("/dashboard");
 	}
 
-	let organization: Awaited<ReturnType<typeof getOrganizationById>> | null =
-		null;
-	try {
-		organization = await getOrganizationById(activeOrganizationId);
-	} catch {
-		redirect("/dashboard");
-	}
-
+	const organization = await getOrganizationById(
+		session.session.activeOrganizationId,
+	);
 	if (!organization) {
 		redirect("/dashboard");
 	}
@@ -47,13 +37,15 @@ export default async function ChatbotPage(): Promise<JSX.Element> {
 						segments={[
 							{ label: "dashboard", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
-							{ label: "AI Chatbot" },
+							{ label: "Rooms" },
 						]}
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			<PageBody disableScroll className="overflow-hidden p-0">
-				<AiChat organizationId={organization.id} />
+			<PageBody>
+				<PageContent title="Rooms">
+					<Rooms />
+				</PageContent>
 			</PageBody>
 		</Page>
 	);

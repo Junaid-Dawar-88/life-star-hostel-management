@@ -67,6 +67,11 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					exactMatch: true,
 				},
 				{
+					label: "Rooms",
+					href: `${basePath}/rooms`,
+					icon: UserSearchIcon,
+				},
+				{
 					label: "Leads",
 					href: `${basePath}/leads`,
 					icon: UserSearchIcon,
@@ -103,11 +108,11 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					icon: CoinsIcon,
 				},
 				// ✅ TASK ADDED HERE
-								{
-									label: "Tasks",
-									href: "/dashboard/organization/tasks",
-									icon: ListTodoIcon,
-								},
+				{
+					label: "Tasks",
+					href: "/dashboard/organization/tasks",
+					icon: ListTodoIcon,
+				},
 			],
 			collapsible: false,
 		},

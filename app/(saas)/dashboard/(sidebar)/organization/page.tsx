@@ -40,7 +40,6 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
 							{ label: "Dashboard" },
 						]}

@@ -1,0 +1,9 @@
+{
+	"permissions": {
+		"allow": [
+			"PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\\) -Force -ErrorAction SilentlyContinue; Remove-Item \"E:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Host \"Ready\")",
+			"PowerShell(Stop-Process -Id 21472 -Force -ErrorAction SilentlyContinue; Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\\) -Force -ErrorAction SilentlyContinue; Remove-Item \"E:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Host \"Killed and lock cleared\")",
+			"Bash(Get-ChildItem -Path \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\" -Recurse -Filter \"page.tsx\")"
+		]
+	}
+}

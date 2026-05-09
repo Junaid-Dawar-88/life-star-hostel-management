@@ -1,52 +1,52 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+import TaskList from "@/components/organization/task-list";
 import {
-  Page,
-  PageBody,
-  PageBreadcrumb,
-  PageContent,
-  PageHeader,
-  PagePrimaryBar,
+	Page,
+	PageBody,
+	PageBreadcrumb,
+	PageContent,
+	PageHeader,
+	PagePrimaryBar,
 } from "@/components/ui/custom/page";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
-import TaskList from "@/components/organization/task-list";
 
 export const metadata: Metadata = {
-  title: "task",
+	title: "task",
 };
 
 export default async function LeadsPage(): Promise<React.JSX.Element> {
-  const session = await getSession();
-  if (!session?.session.activeOrganizationId) {
-    redirect("/dashboard");
-  }
+	const session = await getSession();
+	if (!session?.session.activeOrganizationId) {
+		redirect("/dashboard");
+	}
 
-  const organization = await getOrganizationById(
-    session.session.activeOrganizationId,
-  );
-  if (!organization) {
-    redirect("/dashboard");
-  }
+	const organization = await getOrganizationById(
+		session.session.activeOrganizationId,
+	);
+	if (!organization) {
+		redirect("/dashboard");
+	}
 
-  return (
-    <Page>
-      <PageHeader>
-        <PagePrimaryBar>
-          <PageBreadcrumb
-            segments={[
-              { label: "Home", href: "/dashboard" },
-              { label: organization.name, href: "/dashboard/organization" },
-              { label: "Task" },
-            ]}
-          />
-        </PagePrimaryBar>
-      </PageHeader>
-      <PageBody>
-        <PageContent title="Task">
-          <TaskList />
-        </PageContent>
-      </PageBody>
-    </Page>
-  );
+	return (
+		<Page>
+			<PageHeader>
+				<PagePrimaryBar>
+					<PageBreadcrumb
+						segments={[
+							{ label: "dashboard", href: "/dashboard" },
+							{ label: organization.name, href: "/dashboard/organization" },
+							{ label: "Task" },
+						]}
+					/>
+				</PagePrimaryBar>
+			</PageHeader>
+			<PageBody>
+				<PageContent title="Task">
+					<TaskList />
+				</PageContent>
+			</PageBody>
+		</Page>
+	);
 }

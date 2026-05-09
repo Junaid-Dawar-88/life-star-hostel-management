@@ -18,7 +18,7 @@ export default async function OnboardingPage(): Promise<React.JSX.Element> {
 	}
 
 	if (session.user.onboardingComplete) {
-		return redirect("/dashboard");
+		return redirect("/dashboard/organization");
 	}
 
 	return <OnboardingCard />;
