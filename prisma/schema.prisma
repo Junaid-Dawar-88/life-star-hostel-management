@@ -6,50 +6,11 @@ datasource db {
     provider = "postgresql"
 }
 
-enum BillingInterval {
-    day
-    week
-    month
-    year
-}
-
-enum CreditTransactionType {
-    purchase
-    subscriptionGrant @map("subscription_grant")
-    bonus
-    promo
-    usage
-    refund
-    expire
-    adjustment
-}
-
 enum InvitationStatus {
     pending
     accepted
     rejected
     canceled
-}
-
-enum LeadSource {
-    website
-    referral
-    socialMedia @map("social_media")
-    advertising
-    coldCall    @map("cold_call")
-    email
-    event
-    other
-}
-
-enum LeadStatus {
-    new
-    contacted
-    qualified
-    proposal
-    negotiation
-    won
-    lost
 }
 
 enum MemberRole {
@@ -58,60 +19,10 @@ enum MemberRole {
     member
 }
 
-enum OrderStatus {
-    pending
-    completed
-    failed
-    refunded
-    partiallyRefunded @map("partially_refunded")
-}
-
-enum OrderType {
-    subscription
-    oneTime      @map("one_time")
-}
-
-enum PriceModel {
-    flat
-    perSeat @map("per_seat")
-    metered
-}
-
-enum PriceType {
-    recurring
-    oneTime   @map("one_time")
-}
-
-enum SubscriptionStatus {
-    active
-    canceled
-    incomplete
-    incomplete_expired
-    past_due
-    paused
-    trialing
-    unpaid
-}
-
 enum UserRole {
     user
     admin
 }
-
-
-
-enum TaskStatus {
-  todo
-  inProgress @map("in_progress")
-  done
-}
-
-enum TaskPriority {
-  low
-  medium
-  high
-}
-
 
 model Account {
     id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -136,120 +47,6 @@ model Account {
     @@map("account")
 }
 
-model AiChat {
-    id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId String?  @map("organization_id") @db.Uuid
-    userId         String?  @map("user_id") @db.Uuid
-    title          String?  @db.Text
-    messages       String?  @db.Text
-    pinned         Boolean  @default(false)
-    createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@index([organizationId], map: "ai_chat_organization_id_idx")
-    @@index([userId], map: "ai_chat_user_id_idx")
-    @@index([createdAt], map: "ai_chat_created_at_idx")
-    @@map("ai_chat")
-}
-
-model BillingEvent {
-    id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId String?  @map("organization_id") @db.Uuid
-    stripeEventId  String   @unique(map: "billing_event_stripe_event_id_unique") @map("stripe_event_id") @db.Text
-    eventType      String   @map("event_type") @db.Text
-    subscriptionId String?  @map("subscription_id") @db.Text
-    orderId        String?  @map("order_id") @db.Uuid
-    eventData      String?  @map("event_data") @db.Text
-    processed      Boolean  @default(true)
-    error          String?  @db.Text
-    createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-
-    @@index([organizationId], map: "billing_event_organization_id_idx")
-    @@index([eventType], map: "billing_event_event_type_idx")
-    @@index([subscriptionId], map: "billing_event_subscription_id_idx")
-    @@index([createdAt], map: "billing_event_created_at_idx")
-    @@map("billing_event")
-}
-
-model CreditBalance {
-    id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId    String   @unique(map: "credit_balance_organization_id_unique") @map("organization_id") @db.Uuid
-    balance           Int      @default(0)
-    lifetimePurchased Int      @default(0) @map("lifetime_purchased")
-    lifetimeGranted   Int      @default(0) @map("lifetime_granted")
-    lifetimeUsed      Int      @default(0) @map("lifetime_used")
-    lifetimeExpired   Int      @default(0) @map("lifetime_expired")
-    createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-    @@index([organizationId], map: "credit_balance_organization_id_idx")
-    @@map("credit_balance")
-}
-
-model CreditDeductionFailure {
-    id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId  String    @map("organization_id") @db.Uuid
-    amount          Int
-    errorCode       String    @map("error_code") @db.Text
-    errorMessage    String?   @map("error_message") @db.Text
-    model           String?   @db.Text
-    inputTokens     Int?      @map("input_tokens")
-    outputTokens    Int?      @map("output_tokens")
-    referenceType   String?   @map("reference_type") @db.Text
-    referenceId     String?   @map("reference_id") @db.Text
-    userId          String?   @map("user_id") @db.Uuid
-    resolved        Boolean   @default(false)
-    resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz(6)
-    resolvedBy      String?   @map("resolved_by") @db.Uuid
-    resolutionNotes String?   @map("resolution_notes") @db.Text
-    createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-
-    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    user           User?        @relation("DeductionFailureUser", fields: [userId], references: [id], onDelete: SetNull)
-    resolvedByUser User?        @relation("DeductionFailureResolvedBy", fields: [resolvedBy], references: [id], onDelete: SetNull)
-
-    @@index([organizationId], map: "credit_deduction_failure_org_idx")
-    @@index([resolved], map: "credit_deduction_failure_resolved_idx")
-    @@index([createdAt], map: "credit_deduction_failure_created_idx")
-    @@map("credit_deduction_failure")
-}
-
-model CreditTransaction {
-    id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId String                @map("organization_id") @db.Uuid
-    type           CreditTransactionType
-    amount         Int
-    balanceAfter   Int                   @map("balance_after")
-    description    String?               @db.Text
-    referenceType  String?               @map("reference_type") @db.Text
-    referenceId    String?               @map("reference_id") @db.Text
-    model          String?               @db.Text
-    inputTokens    Int?                  @map("input_tokens")
-    outputTokens   Int?                  @map("output_tokens")
-    createdBy      String?               @map("created_by") @db.Uuid
-    metadata       String?               @db.Text
-    createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-
-    organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    createdByUser User?        @relation("CreditTransactionCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-
-    @@index([organizationId], map: "credit_transaction_organization_id_idx")
-    @@index([type], map: "credit_transaction_type_idx")
-    @@index([createdAt], map: "credit_transaction_created_at_idx")
-    @@index([referenceType, referenceId], map: "credit_transaction_reference_idx")
-    @@index([organizationId, createdAt], map: "credit_transaction_org_created_idx")
-    @@index([organizationId, type], map: "credit_transaction_org_type_idx")
-    @@map("credit_transaction")
-}
-
 model Invitation {
     id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     organizationId String           @map("organization_id") @db.Uuid
@@ -271,36 +68,6 @@ model Invitation {
     @@map("invitation")
 }
 
-model Lead {
-    id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId String     @map("organization_id") @db.Uuid
-    firstName      String     @map("first_name") @db.Text
-    lastName       String     @map("last_name") @db.Text
-    email          String     @db.Text
-    phone          String?    @db.Text
-    company        String?    @db.Text
-    jobTitle       String?    @map("job_title") @db.Text
-    status         LeadStatus @default(new)
-    source         LeadSource @default(other)
-    estimatedValue Int?       @map("estimated_value")
-    notes          String?    @db.Text
-    assignedToId   String?    @map("assigned_to_id") @db.Uuid
-    createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    assignedTo   User?        @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-
-    @@index([organizationId], map: "lead_organization_id_idx")
-    @@index([status], map: "lead_status_idx")
-    @@index([source], map: "lead_source_idx")
-    @@index([assignedToId], map: "lead_assigned_to_id_idx")
-    @@index([email], map: "lead_email_idx")
-    @@index([createdAt], map: "lead_created_at_idx")
-    @@index([organizationId, status], map: "lead_org_status_idx")
-    @@map("lead")
-}
-
 model Member {
     id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     organizationId String     @map("organization_id") @db.Uuid
@@ -319,74 +86,22 @@ model Member {
     @@map("member")
 }
 
-model Order {
-    id                      String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    organizationId          String      @map("organization_id") @db.Uuid
-    stripeCustomerId        String      @map("stripe_customer_id") @db.Text
-    stripePaymentIntentId   String?     @map("stripe_payment_intent_id") @db.Text
-    stripeCheckoutSessionId String?     @map("stripe_checkout_session_id") @db.Text
-    totalAmount             Int         @map("total_amount")
-    currency                String      @default("usd") @db.Text
-    status                  OrderStatus @default(completed)
-    createdAt               DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt               DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    items        OrderItem[]
-
-    @@index([organizationId], map: "order_organization_id_idx")
-    @@index([stripeCustomerId], map: "order_stripe_customer_id_idx")
-    @@index([status], map: "order_status_idx")
-    @@index([stripePaymentIntentId], map: "order_payment_intent_id_idx")
-    @@index([stripeCheckoutSessionId], map: "order_checkout_session_id_idx")
-    @@map("order")
-}
-
-model OrderItem {
-    id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    orderId         String   @map("order_id") @db.Uuid
-    stripePriceId   String   @map("stripe_price_id") @db.Text
-    stripeProductId String?  @map("stripe_product_id") @db.Text
-    quantity        Int      @default(1)
-    unitAmount      Int      @map("unit_amount")
-    totalAmount     Int      @map("total_amount")
-    description     String?  @db.Text
-    createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-    @@index([orderId], map: "order_item_order_id_idx")
-    @@index([stripePriceId], map: "order_item_stripe_price_id_idx")
-    @@map("order_item")
-}
-
 model Organization {
-    id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    name             String   @db.Text
-    slug             String?  @db.Text
-    logo             String?  @db.Text
-    metadata         String?  @db.Text
-    stripeCustomerId String?  @map("stripe_customer_id") @db.Text
-    createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+    id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name      String   @db.Text
+    slug      String?  @db.Text
+    logo      String?  @db.Text
+    metadata  String?  @db.Text
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    members                 Member[]
-    invitations             Invitation[]
-    subscriptions           Subscription[]
-    orders                  Order[]
-    billingEvents           BillingEvent[]
-    aiChats                 AiChat[]
-    leads                   Lead[]
-    creditBalance           CreditBalance?
-    creditTransactions      CreditTransaction[]
-    creditDeductionFailures CreditDeductionFailure[]
-    tasks                   Task[]
-    rooms                   Room[]
-    students                Student[]
+    members     Member[]
+    invitations Invitation[]
+    rooms       Room[]
+    students    Student[]
+
     @@unique([slug], map: "organization_slug_idx")
     @@index([name], map: "organization_name_idx")
-    @@index([stripeCustomerId], map: "organization_stripe_customer_id_idx")
     @@map("organization")
 }
 
@@ -410,61 +125,6 @@ model Session {
     @@index([expiresAt], map: "session_expires_at_idx")
     @@index([activeOrganizationId], map: "session_active_organization_id_idx")
     @@map("session")
-}
-
-model Subscription {
-    id                 String             @id @db.Text
-    organizationId     String             @map("organization_id") @db.Uuid
-    stripeCustomerId   String             @map("stripe_customer_id") @db.Text
-    status             SubscriptionStatus
-    stripePriceId      String             @map("stripe_price_id") @db.Text
-    stripeProductId    String?            @map("stripe_product_id") @db.Text
-    quantity           Int                @default(1)
-    interval           BillingInterval
-    intervalCount      Int                @default(1) @map("interval_count")
-    unitAmount         Int?               @map("unit_amount")
-    currency           String             @default("usd") @db.Text
-    currentPeriodStart DateTime           @map("current_period_start") @db.Timestamptz(6)
-    currentPeriodEnd   DateTime           @map("current_period_end") @db.Timestamptz(6)
-    trialStart         DateTime?          @map("trial_start") @db.Timestamptz(6)
-    trialEnd           DateTime?          @map("trial_end") @db.Timestamptz(6)
-    cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
-    canceledAt         DateTime?          @map("canceled_at") @db.Timestamptz(6)
-    createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    items        SubscriptionItem[]
-
-    @@index([organizationId], map: "subscription_organization_id_idx")
-    @@index([stripeCustomerId], map: "subscription_stripe_customer_id_idx")
-    @@index([status], map: "subscription_status_idx")
-    @@index([stripePriceId], map: "subscription_stripe_price_id_idx")
-    @@index([organizationId, status], map: "subscription_org_status_idx")
-    @@map("subscription")
-}
-
-model SubscriptionItem {
-    id              String           @id @db.Text
-    subscriptionId  String           @map("subscription_id") @db.Text
-    stripePriceId   String           @map("stripe_price_id") @db.Text
-    stripeProductId String?          @map("stripe_product_id") @db.Text
-    quantity        Int              @default(1)
-    priceAmount     Int?             @map("price_amount")
-    priceType       PriceType        @default(recurring) @map("price_type")
-    priceModel      PriceModel       @default(flat) @map("price_model")
-    interval        BillingInterval?
-    intervalCount   Int?             @default(1) @map("interval_count")
-    meterId         String?          @map("meter_id") @db.Text
-    createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-    subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-
-    @@index([subscriptionId], map: "subscription_item_subscription_id_idx")
-    @@index([stripePriceId], map: "subscription_item_stripe_price_id_idx")
-    @@index([priceModel], map: "subscription_item_price_model_idx")
-    @@map("subscription_item")
 }
 
 model TwoFactor {
@@ -497,19 +157,12 @@ model User {
     createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
     updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    accounts                        Account[]
-    sessions                        Session[]                @relation("SessionUser")
-    impersonatedSessions            Session[]                @relation("SessionImpersonatedBy")
-    memberships                     Member[]
-    invitations                     Invitation[]             @relation("InvitationInviter")
-    twoFactors                      TwoFactor[]
-    aiChats                         AiChat[]
-    assignedLeads                   Lead[]                   @relation("LeadAssignedTo")
-    creditTransactionsCreated       CreditTransaction[]      @relation("CreditTransactionCreatedBy")
-    creditDeductionFailures         CreditDeductionFailure[] @relation("DeductionFailureUser")
-    creditDeductionFailuresResolved CreditDeductionFailure[] @relation("DeductionFailureResolvedBy")
-
-    assignedTasks Task[] @relation("TaskAssignedTo")
+    accounts             Account[]
+    sessions             Session[]    @relation("SessionUser")
+    impersonatedSessions Session[]    @relation("SessionImpersonatedBy")
+    memberships          Member[]
+    invitations          Invitation[] @relation("InvitationInviter")
+    twoFactors           TwoFactor[]
 
     @@index([role], map: "user_role_idx")
     @@index([banned], map: "user_banned_idx")
@@ -528,28 +181,6 @@ model Verification {
     @@index([value], map: "verification_value_idx")
     @@index([expiresAt], map: "verification_expires_at_idx")
     @@map("verification")
-}
-
-model Task {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  title          String       @db.Text
-  description    String?      @db.Text
-  status         TaskStatus   @default(todo)
-  priority       TaskPriority @default(medium)
-  dueDate        DateTime?    @map("due_date") @db.Timestamptz(6)
-  assignedToId   String?      @map("assigned_to_id") @db.Uuid
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  assignedTo   User?        @relation("TaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-
-  @@index([organizationId], map: "task_organization_id_idx")
-  @@index([status], map: "task_status_idx")
-  @@index([assignedToId], map: "task_assigned_to_id_idx")
-  @@index([organizationId, status], map: "task_org_status_idx")
-  @@map("task")
 }
 
 model Room {

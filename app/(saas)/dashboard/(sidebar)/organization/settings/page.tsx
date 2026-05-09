@@ -11,7 +11,6 @@ import {
 	PageTitle,
 } from "@/components/ui/custom/page";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
-import { isOrganizationAdmin } from "@/lib/auth/utils";
 
 export const metadata: Metadata = {
 	title: "Organization Settings",
@@ -53,9 +52,7 @@ export default async function OrganizationSettingsPage(): Promise<React.JSX.Elem
 						<div className="mb-2">
 							<PageTitle>Organization Settings</PageTitle>
 						</div>
-						<OrganizationSettingsTabs
-							isAdmin={isOrganizationAdmin(organization, session?.user)}
-						/>
+						<OrganizationSettingsTabs />
 					</div>
 				</div>
 			</PageBody>

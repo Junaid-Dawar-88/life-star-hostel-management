@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sheet";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { trpc } from "@/trpc/client";
 
 const roomSchema = z.object({
 	name: z.string().min(1, "Room name is required"),
@@ -72,166 +73,179 @@ export type RoomData = {
 
 export type RoomModalProps = NiceModalHocProps & {
 	room?: RoomData;
-	onSuccess?: (data: RoomData) => void;
 };
 
-export const RoomModal = NiceModal.create<RoomModalProps>(
-	({ room, onSuccess }) => {
-		const modal = useEnhancedModal();
-		const isEditing = !!room;
+export const RoomModal = NiceModal.create<RoomModalProps>(({ room }) => {
+	const modal = useEnhancedModal();
+	const isEditing = !!room;
+	const utils = trpc.useUtils();
 
-		const form = useZodForm({
-			schema: roomSchema,
-			defaultValues: isEditing
-				? {
-						name: room.name,
-						seatType: room.seatType,
-						floor: room.floor,
-					}
-				: {
-						name: "",
-						seatType: undefined,
-						floor: undefined,
-					},
-		});
-
-		const onSubmit = form.handleSubmit((data: RoomFormValues) => {
-			const result: RoomData = {
-				id: room?.id ?? crypto.randomUUID(),
-				...data,
-			};
-			onSuccess?.(result);
-			toast.success(
-				isEditing ? "Room updated successfully" : "Room created successfully",
-			);
+	const createRoom = trpc.organization.room.create.useMutation({
+		onSuccess: () => {
+			utils.organization.room.list.invalidate();
+			toast.success("Room created successfully");
 			modal.handleClose();
-		});
+		},
+		onError: (err) => toast.error(err.message),
+	});
 
-		return (
-			<Sheet
-				open={modal.visible}
-				onOpenChange={(open) => !open && modal.handleClose()}
+	const updateRoom = trpc.organization.room.update.useMutation({
+		onSuccess: () => {
+			utils.organization.room.list.invalidate();
+			toast.success("Room updated successfully");
+			modal.handleClose();
+		},
+		onError: (err) => toast.error(err.message),
+	});
+
+	const isPending = createRoom.isPending || updateRoom.isPending;
+
+	const form = useZodForm({
+		schema: roomSchema,
+		defaultValues: isEditing
+			? { name: room.name, seatType: room.seatType, floor: room.floor }
+			: { name: "", seatType: undefined, floor: undefined },
+	});
+
+	const onSubmit = form.handleSubmit((data: RoomFormValues) => {
+		if (isEditing) {
+			updateRoom.mutate({ id: room.id, ...data });
+		} else {
+			createRoom.mutate(data);
+		}
+	});
+
+	return (
+		<Sheet
+			open={modal.visible}
+			onOpenChange={(open) => !open && modal.handleClose()}
+		>
+			<SheetContent
+				className="sm:max-w-lg"
+				onAnimationEndCapture={modal.handleAnimationEndCapture}
 			>
-				<SheetContent
-					className="sm:max-w-lg"
-					onAnimationEndCapture={modal.handleAnimationEndCapture}
-				>
-					<SheetHeader>
-						<SheetTitle>{isEditing ? "Edit Room" : "Create Room"}</SheetTitle>
-						<SheetDescription className="sr-only">
-							{isEditing
-								? "Update the room information below."
-								: "Fill in the details to create a new room."}
-						</SheetDescription>
-					</SheetHeader>
+				<SheetHeader>
+					<SheetTitle>{isEditing ? "Edit Room" : "Create Room"}</SheetTitle>
+					<SheetDescription className="sr-only">
+						{isEditing
+							? "Update the room information below."
+							: "Fill in the details to create a new room."}
+					</SheetDescription>
+				</SheetHeader>
 
-					<Form {...form}>
-						<form
-							onSubmit={onSubmit}
-							className="flex flex-1 flex-col overflow-hidden"
-						>
-							<ScrollArea className="flex-1">
-								<div className="space-y-4 px-6 py-4">
+				<Form {...form}>
+					<form
+						onSubmit={onSubmit}
+						className="flex flex-1 flex-col overflow-hidden"
+					>
+						<ScrollArea className="flex-1">
+							<div className="space-y-4 px-6 py-4">
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem asChild>
+											<Field>
+												<FormLabel>Room Name</FormLabel>
+												<FormControl>
+													<Input
+														placeholder="e.g. Room 101"
+														autoComplete="off"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</Field>
+										</FormItem>
+									)}
+								/>
+
+								<div className="grid grid-cols-2 gap-4">
 									<FormField
 										control={form.control}
-										name="name"
+										name="seatType"
 										render={({ field }) => (
 											<FormItem asChild>
 												<Field>
-													<FormLabel>Room Name</FormLabel>
-													<FormControl>
-														<Input
-															placeholder="e.g. Room 101"
-															autoComplete="off"
-															{...field}
-														/>
-													</FormControl>
+													<FormLabel>Seat Type</FormLabel>
+													<Select
+														onValueChange={field.onChange}
+														defaultValue={field.value}
+													>
+														<FormControl>
+															<SelectTrigger className="w-full">
+																<SelectValue placeholder="Select seats" />
+															</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+															{seatOptions.map((opt) => (
+																<SelectItem key={opt.value} value={opt.value}>
+																	{opt.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
 													<FormMessage />
 												</Field>
 											</FormItem>
 										)}
 									/>
 
-									<div className="grid grid-cols-2 gap-4">
-										<FormField
-											control={form.control}
-											name="seatType"
-											render={({ field }) => (
-												<FormItem asChild>
-													<Field>
-														<FormLabel>Seat Type</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-														>
-															<FormControl>
-																<SelectTrigger className="w-full">
-																	<SelectValue placeholder="Select seats" />
-																</SelectTrigger>
-															</FormControl>
-															<SelectContent>
-																{seatOptions.map((opt) => (
-																	<SelectItem key={opt.value} value={opt.value}>
-																		{opt.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormMessage />
-													</Field>
-												</FormItem>
-											)}
-										/>
-
-										<FormField
-											control={form.control}
-											name="floor"
-											render={({ field }) => (
-												<FormItem asChild>
-													<Field>
-														<FormLabel>Floor</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-														>
-															<FormControl>
-																<SelectTrigger className="w-full">
-																	<SelectValue placeholder="Select floor" />
-																</SelectTrigger>
-															</FormControl>
-															<SelectContent>
-																{floorOptions.map((opt) => (
-																	<SelectItem key={opt.value} value={opt.value}>
-																		{opt.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormMessage />
-													</Field>
-												</FormItem>
-											)}
-										/>
-									</div>
+									<FormField
+										control={form.control}
+										name="floor"
+										render={({ field }) => (
+											<FormItem asChild>
+												<Field>
+													<FormLabel>Floor</FormLabel>
+													<Select
+														onValueChange={field.onChange}
+														defaultValue={field.value}
+													>
+														<FormControl>
+															<SelectTrigger className="w-full">
+																<SelectValue placeholder="Select floor" />
+															</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+															{floorOptions.map((opt) => (
+																<SelectItem key={opt.value} value={opt.value}>
+																	{opt.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+													<FormMessage />
+												</Field>
+											</FormItem>
+										)}
+									/>
 								</div>
-							</ScrollArea>
+							</div>
+						</ScrollArea>
 
-							<SheetFooter className="flex-row justify-end gap-2 border-t">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={modal.handleClose}
-								>
-									Cancel
-								</Button>
-								<Button type="submit">
-									{isEditing ? "Update Room" : "Create Room"}
-								</Button>
-							</SheetFooter>
-						</form>
-					</Form>
-				</SheetContent>
-			</Sheet>
-		);
-	},
-);
+						<SheetFooter className="flex-row justify-end gap-2 border-t">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={modal.handleClose}
+								disabled={isPending}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" disabled={isPending}>
+								{isPending
+									? isEditing
+										? "Updating…"
+										: "Creating…"
+									: isEditing
+										? "Update Room"
+										: "Create Room"}
+							</Button>
+						</SheetFooter>
+					</form>
+				</Form>
+			</SheetContent>
+		</Sheet>
+	);
+});

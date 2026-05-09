@@ -3,7 +3,6 @@
 import NiceModal from "@ebay/nice-modal-react";
 import type * as React from "react";
 import { toast } from "sonner";
-import { ConfirmationModal } from "@/components/confirmation-modal";
 import {
 	CsvDelimiterModal,
 	type DelimiterType,
@@ -23,13 +22,11 @@ export type OrganizationBulkActionsProps = {
 
 export function OrganizationBulkActions({
 	rowSelection,
-	onClearSelection,
+	onClearSelection: _onClearSelection,
 }: OrganizationBulkActionsProps): React.JSX.Element {
 	const exportCsv = trpc.admin.organization.exportSelectedToCsv.useMutation();
 	const exportExcel =
 		trpc.admin.organization.exportSelectedToExcel.useMutation();
-	const syncFromStripe = trpc.admin.organization.syncFromStripe.useMutation();
-	const utils = trpc.useUtils();
 
 	const getDelimiterChar = (delimiterType: DelimiterType): string => {
 		switch (delimiterType) {
@@ -89,52 +86,6 @@ export function OrganizationBulkActions({
 		{
 			label: "Export to Excel",
 			onClick: handleExportSelectedToExcel,
-		},
-		{
-			label: "Sync from Stripe",
-			variant: "default",
-			onClick: () => {
-				const organizationIds = getSelectedRowIds(rowSelection);
-				if (organizationIds.length === 0) {
-					toast.error("No organizations selected.");
-					return;
-				}
-				NiceModal.show(ConfirmationModal, {
-					title: "Sync from Stripe",
-					message: `Sync subscriptions and credit purchases for ${organizationIds.length} organization${organizationIds.length !== 1 ? "s" : ""} from Stripe?`,
-					confirmLabel: "Sync",
-					onConfirm: async () => {
-						await syncFromStripe.mutateAsync(
-							{ organizationIds },
-							{
-								onSuccess: (result) => {
-									const subResult = result.subscriptions;
-									const orderResult = result.orders;
-
-									if (
-										subResult.failed === 0 &&
-										subResult.skipped === 0 &&
-										orderResult.failed === 0
-									) {
-										toast.success(
-											"Successfully synced billing and credit data from Stripe.",
-										);
-									} else {
-										toast.warning(
-											"Sync completed with some issues. Check logs for details.",
-										);
-									}
-									utils.admin.organization.list.invalidate();
-									onClearSelection();
-								},
-								onError: (error) => {
-									toast.error(`Failed to sync: ${error.message}`);
-								},
-							},
-						);
-					},
-				});
-			},
 		},
 	];
 

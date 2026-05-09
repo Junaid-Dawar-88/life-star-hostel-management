@@ -50,17 +50,19 @@ export type SheetOverlayElement = React.ComponentRef<
 >;
 export type SheetOverlayProps = React.ComponentPropsWithoutRef<
 	typeof SheetPrimitive.Overlay
->;
+> & { absolute?: boolean };
 
 function SheetOverlay({
 	className,
+	absolute,
 	...props
 }: SheetOverlayProps): React.JSX.Element {
 	return (
 		<SheetPrimitive.Overlay
 			data-slot="sheet-overlay"
 			className={cn(
-				"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 fill-mode-forwards! data-[state=closed]:animate-out data-[state=open]:animate-in",
+				"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 inset-0 z-50 bg-black/50 fill-mode-forwards! data-[state=closed]:animate-out data-[state=open]:animate-in",
+				absolute ? "absolute" : "fixed",
 				className,
 			)}
 			{...props}
@@ -75,21 +77,25 @@ export type SheetContentProps = React.ComponentPropsWithoutRef<
 	typeof SheetPrimitive.Content
 > & {
 	side?: "top" | "right" | "bottom" | "left";
+	container?: Element | DocumentFragment | null;
 };
 
 function SheetContent({
 	className,
 	children,
 	side = "right",
+	container,
 	...props
 }: SheetContentProps): React.JSX.Element {
+	const absolute = container != null;
 	return (
-		<SheetPortal>
-			<SheetOverlay />
+		<SheetPortal container={container ?? undefined}>
+			<SheetOverlay absolute={absolute} />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
 				className={cn(
-					"fixed z-50 flex flex-col gap-4 bg-background fill-mode-forwards! shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:duration-300 data-[state=open]:duration-500",
+					"z-50 flex flex-col gap-4 bg-background fill-mode-forwards! shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:duration-300 data-[state=open]:duration-500",
+					absolute ? "absolute" : "fixed",
 					side === "right" &&
 						"data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
 					side === "left" &&

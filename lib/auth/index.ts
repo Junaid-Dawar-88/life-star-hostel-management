@@ -1,4 +1,3 @@
-import { InvitationStatus } from "@prisma/client";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -12,8 +11,6 @@ import {
 } from "better-auth/plugins";
 import { appConfig } from "@/config/app.config";
 import { authConfig } from "@/config/auth.config";
-import { getOrganizationPlanLimits } from "@/lib/billing/guards";
-import { syncOrganizationSeats } from "@/lib/billing/seat-sync";
 import { prisma } from "@/lib/db";
 import {
 	sendConfirmEmailAddressChangeEmail,
@@ -89,7 +86,6 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
-		// If signup is enabled, we can't auto sign in the user, as the email is not verified yet.
 		autoSignIn: false,
 		requireEmailVerification: true,
 		minPasswordLength: authConfig.minimumPasswordLength,
@@ -138,35 +134,6 @@ export const auth = betterAuth({
 				{ email, inviter, id, organization },
 				_request,
 			) => {
-				// Check member limit before allowing invitation
-				// Count current members + pending invitations against plan limit
-				const [currentMembersCount, pendingInvitationsCount, planLimits] =
-					await Promise.all([
-						prisma.member.count({
-							where: { organizationId: organization.id },
-						}),
-						prisma.invitation.count({
-							where: {
-								organizationId: organization.id,
-								status: InvitationStatus.pending,
-							},
-						}),
-						getOrganizationPlanLimits(organization.id),
-					]);
-
-				const totalPotentialMembers =
-					currentMembersCount + pendingInvitationsCount;
-
-				// -1 means unlimited
-				if (
-					planLimits.maxMembers !== -1 &&
-					totalPotentialMembers >= planLimits.maxMembers
-				) {
-					throw new APIError("FORBIDDEN", {
-						message: `You have reached the maximum number of team members (${planLimits.maxMembers}) for your plan. Please upgrade to invite more members.`,
-					});
-				}
-
 				const existingUser = await prisma.user.findFirst({
 					where: { email },
 					select: { id: true },
@@ -194,55 +161,6 @@ export const auth = betterAuth({
 					inviteLink: url.toString(),
 				});
 			},
-			// Organization hooks for seat-based billing synchronization
-			organizationHooks: {
-				// Sync seats after a member is added (via direct add or invitation acceptance)
-				afterAddMember: async ({ organization }) => {
-					try {
-						await syncOrganizationSeats(organization.id);
-						logger.info("Synced seats after member added", {
-							organizationId: organization.id,
-						});
-					} catch (error) {
-						// Log but don't throw - member was added successfully,
-						// seat sync can be retried or will be fixed by next sync
-						logger.error("Failed to sync seats after member added", {
-							organizationId: organization.id,
-							error: error instanceof Error ? error.message : "Unknown error",
-						});
-					}
-				},
-				// Sync seats after a member is removed
-				afterRemoveMember: async ({ organization }) => {
-					try {
-						await syncOrganizationSeats(organization.id);
-						logger.info("Synced seats after member removed", {
-							organizationId: organization.id,
-						});
-					} catch (error) {
-						// Log but don't throw - member was removed successfully,
-						// seat sync can be retried or will be fixed by next sync
-						logger.error("Failed to sync seats after member removed", {
-							organizationId: organization.id,
-							error: error instanceof Error ? error.message : "Unknown error",
-						});
-					}
-				},
-				// Sync seats after invitation is accepted (member joins)
-				afterAcceptInvitation: async ({ organization }) => {
-					try {
-						await syncOrganizationSeats(organization.id);
-						logger.info("Synced seats after invitation accepted", {
-							organizationId: organization.id,
-						});
-					} catch (error) {
-						logger.error("Failed to sync seats after invitation accepted", {
-							organizationId: organization.id,
-							error: error instanceof Error ? error.message : "Unknown error",
-						});
-					}
-				},
-			},
 		}),
 		openAPI(),
 		twoFactor(),
@@ -251,7 +169,6 @@ export const auth = betterAuth({
 		session: {
 			create: {
 				async before(session, ctx) {
-					// Check if user is banned when creating a session
 					const targetUser = await prisma.user.findFirst({
 						where: { id: session.userId },
 						select: {
@@ -263,12 +180,10 @@ export const auth = betterAuth({
 					});
 
 					if (targetUser?.banned) {
-						// Check if ban has expired
 						if (
 							targetUser.banExpires &&
 							new Date(targetUser.banExpires) < new Date()
 						) {
-							// Update user to unban
 							await prisma.user.update({
 								where: { id: targetUser.id },
 								data: {
@@ -278,7 +193,6 @@ export const auth = betterAuth({
 								},
 							});
 						} else {
-							// User is still banned
 							let message =
 								targetUser.banReason || "Your account has been suspended";
 							if (targetUser.banExpires) {
@@ -308,7 +222,6 @@ export const auth = betterAuth({
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
 			if (ctx.path === "/sign-up/email" || ctx.path === "/sign-in/email") {
-				// Check if user is banned when signing in
 				if (ctx.path === "/sign-in/email") {
 					const email = ctx.body?.email;
 					const targetUser = email
@@ -324,12 +237,10 @@ export const auth = betterAuth({
 						: null;
 
 					if (targetUser?.banned) {
-						// Check if ban has expired
 						if (
 							targetUser.banExpires &&
 							new Date(targetUser.banExpires) < new Date()
 						) {
-							// Update user to unban
 							await prisma.user.update({
 								where: { id: targetUser.id },
 								data: {
@@ -339,7 +250,6 @@ export const auth = betterAuth({
 								},
 							});
 						} else {
-							// User is still banned
 							let message =
 								targetUser.banReason || "Your account has been suspended";
 							if (targetUser.banExpires) {

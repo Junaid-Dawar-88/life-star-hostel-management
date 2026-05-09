@@ -1,9 +1,9 @@
 "use client";
 
+import NiceModal from "@ebay/nice-modal-react";
 import type * as React from "react";
 import { ActiveOrganizationProvider } from "@/components/active-organization-provider";
 import type { getOrganizationById } from "@/lib/auth/server";
-import { HostelProvider } from "@/lib/hostel-context";
 
 export function OrganizationProviders({
 	organization,
@@ -13,7 +13,7 @@ export function OrganizationProviders({
 }>): React.JSX.Element {
 	return (
 		<ActiveOrganizationProvider organization={organization}>
-			<HostelProvider>{children}</HostelProvider>
+			<NiceModal.Provider>{children}</NiceModal.Provider>
 		</ActiveOrganizationProvider>
 	);
 }

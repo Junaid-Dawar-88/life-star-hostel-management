@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	Building2Icon,
-	CoinsIcon,
-	CreditCardIcon,
-	FileCog2Icon,
-	UsersIcon,
-} from "lucide-react";
+import { Building2Icon, FileCog2Icon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -47,16 +41,6 @@ export function AdminMenuItems(): React.JSX.Element {
 					label: "Organizations",
 					href: "/dashboard/admin/organizations",
 					icon: Building2Icon,
-				},
-				{
-					label: "Subscriptions",
-					href: "/dashboard/admin/subscriptions",
-					icon: CreditCardIcon,
-				},
-				{
-					label: "Credits",
-					href: "/dashboard/admin/credits",
-					icon: CoinsIcon,
 				},
 				{
 					label: "App Config",

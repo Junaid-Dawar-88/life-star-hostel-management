@@ -1,15 +1,10 @@
 "use client";
 
 import {
-	BotIcon,
 	ChevronRight,
-	CoinsIcon,
-	CreditCardIcon,
 	LayoutDashboardIcon,
-	ListTodoIcon,
 	SettingsIcon,
 	UserSearchIcon,
-	UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -71,16 +66,6 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					href: `${basePath}/rooms`,
 					icon: UserSearchIcon,
 				},
-				{
-					label: "Leads",
-					href: `${basePath}/leads`,
-					icon: UserSearchIcon,
-				},
-				{
-					label: "AI Chatbot",
-					href: `${basePath}/chatbot`,
-					icon: BotIcon,
-				},
 			],
 			collapsible: false,
 		},
@@ -89,29 +74,8 @@ export function OrganizationMenuItems(): React.JSX.Element {
 			items: [
 				{
 					label: "General",
-					href: `${basePath}/settings?tab=general`,
+					href: `${basePath}/settings`,
 					icon: SettingsIcon,
-				},
-				{
-					label: "Members",
-					href: `${basePath}/settings?tab=members`,
-					icon: UsersIcon,
-				},
-				{
-					label: "Subscription",
-					href: `${basePath}/settings?tab=subscription`,
-					icon: CreditCardIcon,
-				},
-				{
-					label: "Credits",
-					href: `${basePath}/settings?tab=credits`,
-					icon: CoinsIcon,
-				},
-				// ✅ TASK ADDED HERE
-				{
-					label: "Tasks",
-					href: "/dashboard/organization/tasks",
-					icon: ListTodoIcon,
 				},
 			],
 			collapsible: false,

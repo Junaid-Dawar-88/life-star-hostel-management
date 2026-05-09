@@ -17,7 +17,6 @@ import {
 } from "nuqs";
 import * as React from "react";
 import { toast } from "sonner";
-import { AdjustCreditsModal } from "@/components/admin/organizations/adjust-credits-modal";
 import { OrganizationBulkActions } from "@/components/admin/organizations/organization-bulk-actions";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
@@ -32,7 +31,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { appConfig } from "@/config/app.config";
@@ -50,62 +48,38 @@ type Organization = {
 	metadata: string | null;
 	membersCount: number;
 	pendingInvites: number;
-	subscriptionStatus: string | null;
-	subscriptionPlan: string | null;
-	subscriptionId: string | null;
-	cancelAtPeriodEnd: boolean | null;
-	trialEnd: Date | null;
-	credits: number | null;
 };
 
 export function OrganizationsTable(): React.JSX.Element {
 	const [searchQuery, setSearchQuery] = useQueryState(
 		"query",
-		parseAsString.withDefault("").withOptions({
-			shallow: true,
-		}),
+		parseAsString.withDefault("").withOptions({ shallow: true }),
 	);
 
 	const [pageIndex, setPageIndex] = useQueryState(
 		"pageIndex",
-		parseAsInteger.withDefault(0).withOptions({
-			shallow: true,
-		}),
+		parseAsInteger.withDefault(0).withOptions({ shallow: true }),
 	);
 
 	const [pageSize, setPageSize] = useQueryState(
 		"pageSize",
-		parseAsInteger.withDefault(appConfig.pagination.defaultLimit).withOptions({
-			shallow: true,
-		}),
-	);
-
-	const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useQueryState(
-		"subscriptionStatus",
-		parseAsArrayOf(parseAsString).withDefault([]).withOptions({
-			shallow: true,
-		}),
-	);
-
-	const [balanceRangeFilter, setBalanceRangeFilter] = useQueryState(
-		"balanceRange",
-		parseAsArrayOf(parseAsString).withDefault([]).withOptions({
-			shallow: true,
-		}),
+		parseAsInteger
+			.withDefault(appConfig.pagination.defaultLimit)
+			.withOptions({ shallow: true }),
 	);
 
 	const [membersCountFilter, setMembersCountFilter] = useQueryState(
 		"membersCount",
-		parseAsArrayOf(parseAsString).withDefault([]).withOptions({
-			shallow: true,
-		}),
+		parseAsArrayOf(parseAsString)
+			.withDefault([])
+			.withOptions({ shallow: true }),
 	);
 
 	const [createdAtFilter, setCreatedAtFilter] = useQueryState(
 		"createdAt",
-		parseAsArrayOf(parseAsString).withDefault([]).withOptions({
-			shallow: true,
-		}),
+		parseAsArrayOf(parseAsString)
+			.withDefault([])
+			.withOptions({ shallow: true }),
 	);
 
 	const [sorting, setSorting] = useQueryState<SortingState>(
@@ -125,66 +99,33 @@ export function OrganizationsTable(): React.JSX.Element {
 	);
 
 	const utils = trpc.useUtils();
-
 	const deleteOrganizationMutation =
 		trpc.admin.organization.delete.useMutation();
 
-	const cancelSubscriptionMutation =
-		trpc.admin.organization.cancelSubscription.useMutation();
-
-	const syncFromStripeMutation =
-		trpc.admin.organization.syncFromStripe.useMutation();
-
-	// Build columnFilters from URL state
 	const columnFilters: ColumnFiltersState = React.useMemo(() => {
 		const filters: ColumnFiltersState = [];
-		if (membersCountFilter && membersCountFilter.length > 0) {
+		if (membersCountFilter?.length)
 			filters.push({ id: "membersCount", value: membersCountFilter });
-		}
-		if (createdAtFilter && createdAtFilter.length > 0) {
+		if (createdAtFilter?.length)
 			filters.push({ id: "createdAt", value: createdAtFilter });
-		}
-		if (subscriptionStatusFilter && subscriptionStatusFilter.length > 0) {
-			filters.push({
-				id: "subscriptionStatus",
-				value: subscriptionStatusFilter,
-			});
-		}
-		if (balanceRangeFilter && balanceRangeFilter.length > 0) {
-			filters.push({ id: "credits", value: balanceRangeFilter });
-		}
 		return filters;
-	}, [
-		membersCountFilter,
-		createdAtFilter,
-		subscriptionStatusFilter,
-		balanceRangeFilter,
-	]);
+	}, [membersCountFilter, createdAtFilter]);
 
 	const handleFiltersChange = (filters: ColumnFiltersState): void => {
 		const getFilterValue = (id: string): string[] => {
 			const filter = filters.find((f) => f.id === id);
 			return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
 		};
-
 		setMembersCountFilter(getFilterValue("membersCount"));
 		setCreatedAtFilter(getFilterValue("createdAt"));
-		setSubscriptionStatusFilter(getFilterValue("subscriptionStatus"));
-		setBalanceRangeFilter(getFilterValue("credits"));
-
-		if (pageIndex !== 0) {
-			setPageIndex(0);
-		}
+		if (pageIndex !== 0) setPageIndex(0);
 	};
 
 	const handleSortingChange = (newSorting: SortingState): void => {
 		setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
-		if (pageIndex !== 0) {
-			setPageIndex(0);
-		}
+		if (pageIndex !== 0) setPageIndex(0);
 	};
 
-	// Build sort params from sorting state
 	const sortParams = React.useMemo(() => {
 		const fallbackSort = { id: "name", desc: false } as const;
 		const currentSort = sorting?.[0] ?? DEFAULT_SORTING[0] ?? fallbackSort;
@@ -218,27 +159,9 @@ export function OrganizationsTable(): React.JSX.Element {
 					| "this-month"
 					| "older"
 				)[],
-				subscriptionStatus: (subscriptionStatusFilter || []) as (
-					| "active"
-					| "trialing"
-					| "canceled"
-					| "past_due"
-					| "incomplete"
-					| "incomplete_expired"
-					| "unpaid"
-					| "paused"
-				)[],
-				balanceRange: (balanceRangeFilter || []) as (
-					| "zero"
-					| "low"
-					| "medium"
-					| "high"
-				)[],
 			},
 		},
-		{
-			placeholderData: (prev) => prev,
-		},
+		{ placeholderData: (prev) => prev },
 	);
 
 	const { rowSelection, setRowSelection, clearSelection } = useTableSelection({
@@ -251,9 +174,7 @@ export function OrganizationsTable(): React.JSX.Element {
 	const handleSearchQueryChange = (value: string): void => {
 		if (value !== searchQuery) {
 			setSearchQuery(value);
-			if (pageIndex !== 0) {
-				setPageIndex(0);
-			}
+			if (pageIndex !== 0) setPageIndex(0);
 		}
 	};
 
@@ -308,45 +229,6 @@ export function OrganizationsTable(): React.JSX.Element {
 			},
 		},
 		{
-			accessorKey: "subscriptionStatus",
-			header: ({ column }) => (
-				<SortableColumnHeader column={column} title="Subscription" />
-			),
-			cell: ({ row }) => {
-				const status = row.original.subscriptionStatus;
-				if (!status) return <span className="text-muted-foreground">—</span>;
-
-				const planLabel = row.original.subscriptionPlan
-					? row.original.subscriptionPlan.split("_")[0]
-					: "Unknown";
-
-				// Capitalize status for display
-				const statusLabel =
-					status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
-
-				return (
-					<span className="text-foreground/80 text-xs text-nowrap">
-						{planLabel} • {statusLabel}
-					</span>
-				);
-			},
-		},
-		{
-			accessorKey: "credits",
-			header: ({ column }) => (
-				<SortableColumnHeader column={column} title="Credits" />
-			),
-			cell: ({ row }) => {
-				const credits = row.original.credits ?? 0;
-
-				return (
-					<div className="text-foreground/80 text-xs font-medium">
-						{credits.toLocaleString()}
-					</div>
-				);
-			},
-		},
-		{
 			accessorKey: "pendingInvites",
 			enableSorting: false,
 			header: () => (
@@ -354,12 +236,11 @@ export function OrganizationsTable(): React.JSX.Element {
 					Pending Invites
 				</div>
 			),
-			cell: ({ row }) => {
-				const pendingInvites = row.original.pendingInvites;
-				return (
-					<div className="text-foreground/80 text-xs">{pendingInvites}</div>
-				);
-			},
+			cell: ({ row }) => (
+				<div className="text-foreground/80 text-xs">
+					{row.original.pendingInvites}
+				</div>
+			),
 		},
 		{
 			accessorKey: "createdAt",
@@ -394,7 +275,6 @@ export function OrganizationsTable(): React.JSX.Element {
 							return date >= todayStart && date < todayEnd;
 						}
 						case "this-week": {
-							// Adjust to the start of the current week (Sunday)
 							const weekStart = new Date(now);
 							weekStart.setDate(now.getDate() - now.getDay());
 							weekStart.setHours(0, 0, 0, 0);
@@ -406,13 +286,12 @@ export function OrganizationsTable(): React.JSX.Element {
 							return date >= monthStart;
 						}
 						case "older": {
-							// Defined as older than a month
 							const monthAgo = new Date(
 								now.getFullYear(),
 								now.getMonth() - 1,
 								now.getDate(),
 							);
-							monthAgo.setHours(23, 59, 59, 999); // End of the day a month ago
+							monthAgo.setHours(23, 59, 59, 999);
 							return date <= monthAgo;
 						}
 						default:
@@ -442,111 +321,6 @@ export function OrganizationsTable(): React.JSX.Element {
 							<DropdownMenuContent align="end">
 								<DropdownMenuItem
 									onClick={() => {
-										NiceModal.show(AdjustCreditsModal, {
-											organizationId: id,
-											organizationName: name,
-											currentBalance: row.original.credits ?? 0,
-										});
-									}}
-								>
-									Adjust credits
-								</DropdownMenuItem>
-								{row.original.subscriptionId &&
-									row.original.subscriptionStatus === "active" && (
-										<DropdownMenuItem
-											onClick={() => {
-												window.open(
-													`https://dashboard.stripe.com/subscriptions/${row.original.subscriptionId}`,
-													"_blank",
-												);
-											}}
-										>
-											Open in Stripe
-										</DropdownMenuItem>
-									)}
-								{row.original.subscriptionId &&
-									row.original.subscriptionStatus === "active" &&
-									!row.original.cancelAtPeriodEnd && (
-										<DropdownMenuItem
-											onClick={() => {
-												NiceModal.show(ConfirmationModal, {
-													title: "Cancel subscription",
-													message:
-														"Are you sure you want to cancel this subscription at the end of the current billing period?",
-													confirmLabel: "Cancel Subscription",
-													destructive: true,
-													onConfirm: async () => {
-														await cancelSubscriptionMutation.mutateAsync(
-															{
-																subscriptionId: row.original.subscriptionId!,
-																immediate: false,
-															},
-															{
-																onSuccess: () => {
-																	toast.success(
-																		"Subscription scheduled to cancel at period end",
-																	);
-																	utils.admin.organization.list.invalidate();
-																},
-																onError: (error) => {
-																	toast.error(
-																		`Failed to cancel: ${error.message}`,
-																	);
-																},
-															},
-														);
-													},
-												});
-											}}
-											className="text-destructive focus:text-destructive"
-										>
-											Cancel subscription
-										</DropdownMenuItem>
-									)}
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={() => {
-										NiceModal.show(ConfirmationModal, {
-											title: "Sync from Stripe",
-											message: `Sync subscriptions for ${name} from Stripe? This will fetch all subscriptions for this organization's customer ID.`,
-											confirmLabel: "Sync",
-											onConfirm: async () => {
-												await syncFromStripeMutation.mutateAsync(
-													{ organizationIds: [id] },
-													{
-														onSuccess: (result) => {
-															const subResult = result.subscriptions;
-															const orderResult = result.orders;
-
-															if (
-																subResult.failed === 0 &&
-																subResult.skipped === 0 &&
-																orderResult.failed === 0
-															) {
-																toast.success(
-																	"Successfully synced billing and credit data from Stripe.",
-																);
-															} else {
-																toast.warning(
-																	"Sync completed with some issues. Check logs for details.",
-																);
-															}
-															utils.admin.organization.list.invalidate();
-														},
-														onError: (error) => {
-															toast.error(`Failed to sync: ${error.message}`);
-														},
-													},
-												);
-											},
-										});
-									}}
-								>
-									Sync from Stripe
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={() => {
 										NiceModal.show(ConfirmationModal, {
 											title: "Delete organization",
 											message:
@@ -566,7 +340,7 @@ export function OrganizationsTable(): React.JSX.Element {
 															utils.admin.organization.list.invalidate();
 														},
 														onError: () => {
-															toast.success(
+															toast.error(
 																"Organization could not be deleted. Please try again.",
 															);
 														},
@@ -577,7 +351,7 @@ export function OrganizationsTable(): React.JSX.Element {
 									}}
 									variant="destructive"
 								>
-									Delete
+									Delete {name}
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -606,26 +380,6 @@ export function OrganizationsTable(): React.JSX.Element {
 				{ value: "this-week", label: "This week" },
 				{ value: "this-month", label: "This month" },
 				{ value: "older", label: "Older" },
-			],
-		},
-		{
-			key: "subscriptionStatus",
-			title: "Subscription",
-			options: [
-				{ value: "active", label: "Active" },
-				{ value: "trialing", label: "Trialing" },
-				{ value: "canceled", label: "Canceled" },
-				{ value: "past_due", label: "Past Due" },
-			],
-		},
-		{
-			key: "credits",
-			title: "Credits",
-			options: [
-				{ value: "zero", label: "Zero (0)" },
-				{ value: "low", label: "Low (1-1,000)" },
-				{ value: "medium", label: "Medium (1k-50k)" },
-				{ value: "high", label: "High (50k+)" },
 			],
 		},
 	];

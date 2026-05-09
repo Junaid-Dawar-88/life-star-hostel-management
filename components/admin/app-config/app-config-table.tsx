@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/tooltip";
 import { appConfig } from "@/config/app.config";
 import { authConfig } from "@/config/auth.config";
-import { billingConfig } from "@/config/billing.config";
 import { storageConfig } from "@/config/storage.config";
 
 type ConfigRow = { key: string; type: string; value: unknown };
@@ -174,14 +173,6 @@ const configSections: ConfigSection[] = [
 			"Authentication and CORS settings including redirects, session duration, social login, and allowed origins.",
 		configFile: "config/auth.config.ts",
 		data: authConfig,
-	},
-	{
-		id: "billing",
-		label: "Billing",
-		description:
-			"Billing configuration including plans, pricing, and payment settings.",
-		configFile: "config/billing.config.ts",
-		data: billingConfig,
 	},
 	{
 		id: "storage",

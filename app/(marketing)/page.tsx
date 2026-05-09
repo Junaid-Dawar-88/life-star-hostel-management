@@ -4,7 +4,6 @@ import { FeaturesSection } from "@/components/marketing/sections/features-sectio
 import { HeroSection } from "@/components/marketing/sections/hero-section";
 import { LatestArticlesSection } from "@/components/marketing/sections/latest-articles-section";
 import { LogoCloudSection } from "@/components/marketing/sections/logo-cloud-section";
-import { PricingSection } from "@/components/marketing/sections/pricing-section";
 import { StatsSection } from "@/components/marketing/sections/stats-section";
 import { TestimonialsSection } from "@/components/marketing/sections/testimonials-section";
 import { appConfig } from "@/config/app.config";
@@ -120,7 +119,6 @@ export default async function HomePage() {
 			<StatsSection />
 			<TestimonialsSection />
 			<FaqSection content={faqContent} />
-			<PricingSection />
 			<LatestArticlesSection posts={posts} />
 			<CtaSection content={ctaContent} />
 		</>

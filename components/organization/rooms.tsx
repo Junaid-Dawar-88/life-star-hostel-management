@@ -1,51 +1,73 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { Plus, Search, X } from "lucide-react";
+import { BedDouble, Plus, Search, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useHostel } from "@/lib/hostel-context";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/trpc/client";
 import { RoomCard } from "./room-card";
 import { type RoomData, RoomModal } from "./room-modal";
 import { StudentRoomModal } from "./student-room";
 
+type SeatType = "1_seater" | "2_seater" | "3_seater" | "4_seater";
+type Floor = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
+
+function toRoomData(room: {
+	id: string;
+	name: string;
+	seatType: string;
+	floor: number;
+}): RoomData {
+	return {
+		id: room.id,
+		name: room.name,
+		seatType: room.seatType as SeatType,
+		floor: String(room.floor) as Floor,
+	};
+}
+
 export function Rooms() {
-	const { rooms, addRoom, updateRoom, deleteRoom } = useHostel();
+	const utils = trpc.useUtils();
 	const [search, setSearch] = useState("");
+
+	const { data: rooms = [], isLoading } = trpc.organization.room.list.useQuery(
+		{},
+	);
+
+	const deleteRoom = trpc.organization.room.delete.useMutation({
+		onSuccess: () => {
+			utils.organization.room.list.invalidate();
+			toast.success("Room deleted");
+		},
+		onError: (err) => toast.error(err.message),
+	});
 
 	const filteredRooms = rooms.filter((room) => {
 		const q = search.toLowerCase();
 		return (
 			room.name.toLowerCase().includes(q) ||
-			room.floor.includes(q) ||
+			String(room.floor).includes(q) ||
 			room.seatType.replace(/_/g, " ").includes(q)
 		);
 	});
 
 	const openCreate = () => {
-		NiceModal.show(RoomModal, {
-			onSuccess: (data) => {
-				addRoom(data);
-			},
-		});
+		NiceModal.show(RoomModal, {});
 	};
 
-	const openEdit = (room: RoomData) => {
-		NiceModal.show(RoomModal, {
-			room,
-			onSuccess: (updated) => {
-				updateRoom(updated);
-			},
-		});
+	const openEdit = (room: (typeof rooms)[0]) => {
+		NiceModal.show(RoomModal, { room: toRoomData(room) });
 	};
 
-	const openView = (room: RoomData) => {
-		NiceModal.show(StudentRoomModal, { room });
+	const openView = (room: (typeof rooms)[0]) => {
+		NiceModal.show(StudentRoomModal, { room: toRoomData(room) });
 	};
 
 	const handleDelete = (id: string) => {
-		deleteRoom(id);
+		deleteRoom.mutate({ id });
 	};
 
 	return (
@@ -83,8 +105,15 @@ export function Rooms() {
 				)}
 			</div>
 
-			{rooms.length === 0 ? (
+			{isLoading ? (
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{Array.from({ length: 3 }).map((_, i) => (
+						<Skeleton key={i} className="h-48 rounded-2xl" />
+					))}
+				</div>
+			) : rooms.length === 0 ? (
 				<div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+					<BedDouble className="mb-3 h-8 w-8 text-muted-foreground/40" />
 					<p className="text-sm font-medium text-muted-foreground">
 						No rooms yet
 					</p>
@@ -107,7 +136,7 @@ export function Rooms() {
 					{filteredRooms.map((room) => (
 						<RoomCard
 							key={room.id}
-							{...room}
+							{...toRoomData(room)}
 							onView={() => openView(room)}
 							onEdit={() => openEdit(room)}
 							onDelete={handleDelete}

@@ -6,19 +6,13 @@ import { appConfig } from "@/config/app.config";
 import { auth } from "@/lib/auth";
 import { assertUserIsOrgMember } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
 import {
 	createOrganizationSchema,
 	getOrganizationByIdSchema,
 } from "@/schemas/organization-schemas";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { organizationAiRouter } from "@/trpc/routers/organization/organization-ai-router";
-import { organizationCreditRouter } from "@/trpc/routers/organization/organization-credit-router";
-import { organizationLeadRouter } from "@/trpc/routers/organization/organization-lead-router";
-import { organizationSubscriptionRouter } from "@/trpc/routers/organization/organization-subscription-router";
 import { organizationRoomRouter } from "./organization-room-router";
 import { organizationStudentRouter } from "./organization-student-router";
-import { organizationTaskRouter } from "./organization-task-router";
 
 async function generateOrganizationSlug(name: string): Promise<string> {
 	const baseSlug = slugify(name, {
@@ -69,7 +63,6 @@ export const organizationRouter = createTRPCRouter({
 	get: protectedProcedure
 		.input(getOrganizationByIdSchema)
 		.query(async ({ ctx, input }) => {
-			// Verify user is a member of this organization (throws if not)
 			const { organization } = await assertUserIsOrgMember(
 				input.id,
 				ctx.user.id,
@@ -80,7 +73,6 @@ export const organizationRouter = createTRPCRouter({
 	create: protectedProcedure
 		.input(createOrganizationSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Check if organization creation is allowed for non-admin users
 			if (
 				!appConfig.organizations.allowUserCreation &&
 				ctx.user.role !== "admin"
@@ -96,7 +88,7 @@ export const organizationRouter = createTRPCRouter({
 				headers: await headers(),
 				body: {
 					name: input.name,
-					slug: await generateOrganizationSlug(input.name), // Slug is kept for internal reference but not used in URLs
+					slug: await generateOrganizationSlug(input.name),
 					metadata: input.metadata,
 				},
 			});
@@ -108,32 +100,9 @@ export const organizationRouter = createTRPCRouter({
 				});
 			}
 
-			// Initialize credit balance for the new organization
-			// This ensures the organization has a balance record from creation
-			// rather than relying on lazy initialization
-			try {
-				await prisma.creditBalance.upsert({
-					where: { organizationId: organization.id },
-					create: { organizationId: organization.id },
-					update: {},
-				});
-			} catch (error) {
-				// Log but don't fail org creation - balance will be created lazily if needed
-				logger.warn(
-					{ organizationId: organization.id, error },
-					"Failed to initialize credit balance for new organization",
-				);
-			}
-
 			return organization;
 		}),
 
-	// Context-specific sub-routers
-	ai: organizationAiRouter,
-	credit: organizationCreditRouter,
-	lead: organizationLeadRouter,
-	subscription: organizationSubscriptionRouter,
-	task: organizationTaskRouter,
 	room: organizationRoomRouter,
 	student: organizationStudentRouter,
 });

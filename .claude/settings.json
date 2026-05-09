@@ -3,7 +3,17 @@
 		"allow": [
 			"PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\\) -Force -ErrorAction SilentlyContinue; Remove-Item \"E:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Host \"Ready\")",
 			"PowerShell(Stop-Process -Id 21472 -Force -ErrorAction SilentlyContinue; Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\\) -Force -ErrorAction SilentlyContinue; Remove-Item \"E:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\.next\\\\dev\\\\lock\" -Force -ErrorAction SilentlyContinue; Write-Host \"Killed and lock cleared\")",
-			"Bash(Get-ChildItem -Path \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\" -Recurse -Filter \"page.tsx\")"
+			"Bash(Get-ChildItem -Path \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\" -Recurse -Filter \"page.tsx\")",
+			"Bash(Remove-Item -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\components\\\\organization\\\\leads-bulk-actions.tsx\" \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\components\\\\organization\\\\leads-modal.tsx\" \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\components\\\\organization\\\\leads-table.tsx\" \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\schemas\\\\organization-lead-schemas.ts\" \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\trpc\\\\routers\\\\organization\\\\organization-lead-router.ts\")",
+			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\\\\\\(sidebar\\)\\\\organization\\\\leads\")",
+			"Bash(Get-ChildItem -Path \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\" -Directory)",
+			"Bash(Select-Object Name)",
+			"Bash(xargs grep -l \"useChat\\\\|chatModels\\\\|DEFAULT_CHAT_MODEL\")",
+			"Bash(xargs grep -l \"chatbot\\\\|AI Chatbot\")",
+			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\components\\\\ai\" -ErrorAction SilentlyContinue)",
+			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\\\(saas\\)\\\\dashboard\\\\\\(sidebar\\)\\\\organization\\\\chatbot\" -ErrorAction SilentlyContinue)",
+			"Bash(Remove-Item -Recurse -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\app\\\\api\\\\ai\" -ErrorAction SilentlyContinue)",
+			"Bash(Remove-Item -Force \"e:\\\\PROJECTS\\\\life-star-hostel\\\\hostel-management\\\\life-star-hostel-management\\\\trpc\\\\routers\\\\organization\\\\organization-ai-router.ts\" -ErrorAction SilentlyContinue)"
 		]
 	}
 }

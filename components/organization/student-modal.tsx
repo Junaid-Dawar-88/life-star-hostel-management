@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useZodForm } from "@/hooks/use-zod-form";
+import { trpc } from "@/trpc/client";
 
 const studentSchema = z.object({
 	name: z.string().min(1, "Student name is required"),
@@ -57,17 +58,37 @@ export type StudentData = StudentFormValues & { id: string };
 export type StudentModalProps = NiceModalHocProps & {
 	roomId?: string;
 	student?: StudentData;
-	onSuccess?: (data: StudentData) => void;
 };
 
 export const StudentModal = NiceModal.create<StudentModalProps>(
-	({ student, onSuccess }) => {
+	({ roomId, student }) => {
 		const modal = useEnhancedModal();
 		const isEditing = !!student;
+		const utils = trpc.useUtils();
 		const fileInputRef = useRef<HTMLInputElement>(null);
 		const [preview, setPreview] = useState<string | undefined>(
 			student?.picture,
 		);
+
+		const createStudent = trpc.organization.student.create.useMutation({
+			onSuccess: () => {
+				utils.organization.room.list.invalidate();
+				toast.success("Student added successfully");
+				modal.handleClose();
+			},
+			onError: (err) => toast.error(err.message),
+		});
+
+		const updateStudent = trpc.organization.student.update.useMutation({
+			onSuccess: () => {
+				utils.organization.room.list.invalidate();
+				toast.success("Student updated successfully");
+				modal.handleClose();
+			},
+			onError: (err) => toast.error(err.message),
+		});
+
+		const isPending = createStudent.isPending || updateStudent.isPending;
 
 		const form = useZodForm({
 			schema: studentSchema,
@@ -109,18 +130,12 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 		};
 
 		const onSubmit = form.handleSubmit((data: StudentFormValues) => {
-			const result: StudentData = {
-				id: student?.id ?? crypto.randomUUID(),
-				...data,
-				picture: preview,
-			};
-			onSuccess?.(result);
-			toast.success(
-				isEditing
-					? "Student updated successfully"
-					: "Student added successfully",
-			);
-			modal.handleClose();
+			const payload = { ...data, picture: preview };
+			if (isEditing) {
+				updateStudent.mutate({ id: student.id, ...payload });
+			} else if (roomId) {
+				createStudent.mutate({ roomId, ...payload });
+			}
 		});
 
 		return (
@@ -392,11 +407,18 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 									type="button"
 									variant="outline"
 									onClick={modal.handleClose}
+									disabled={isPending}
 								>
 									Cancel
 								</Button>
-								<Button type="submit">
-									{isEditing ? "Update Student" : "Add Student"}
+								<Button type="submit" disabled={isPending}>
+									{isPending
+										? isEditing
+											? "Updating…"
+											: "Adding…"
+										: isEditing
+											? "Update Student"
+											: "Add Student"}
 								</Button>
 							</SheetFooter>
 						</form>
