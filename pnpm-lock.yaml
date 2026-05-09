@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@types/pg': 8.15.6
+
 importers:
 
   .:
@@ -348,6 +351,9 @@ importers:
       '@testcontainers/postgresql':
         specifier: 11.11.0
         version: 11.11.0
+      '@types/mdx':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@types/node':
         specifier: 25.0.10
         version: 25.0.10
@@ -357,6 +363,9 @@ importers:
       '@types/papaparse':
         specifier: 5.5.2
         version: 5.5.2
+      '@types/pg':
+        specifier: 8.15.6
+        version: 8.15.6
       '@types/react':
         specifier: 19.2.10
         version: 19.2.10

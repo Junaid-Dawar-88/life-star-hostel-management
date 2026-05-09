@@ -162,9 +162,11 @@
 		"@playwright/test": "1.58.0",
 		"@tailwindcss/postcss": "4.1.18",
 		"@testcontainers/postgresql": "11.11.0",
+		"@types/mdx": "^2.0.13",
 		"@types/node": "25.0.10",
 		"@types/nprogress": "0.2.3",
 		"@types/papaparse": "5.5.2",
+		"@types/pg": "8.15.6",
 		"@types/react": "19.2.10",
 		"@types/react-dom": "19.2.3",
 		"autoprefixer": "10.4.23",
@@ -189,7 +191,10 @@
 			"esbuild",
 			"prisma",
 			"sharp"
-		]
+		],
+		"overrides": {
+			"@types/pg": "8.15.6"
+		}
 	},
 	"overrides": {
 		"@types/react": "19.2.10",
