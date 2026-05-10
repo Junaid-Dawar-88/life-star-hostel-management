@@ -1,0 +1,313 @@
+"use client";
+
+import { Clock, Pencil, UtensilsCrossed } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod/v4";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { useZodForm } from "@/hooks/use-zod-form";
+import type { MealType } from "@/schemas/organization-food-menu-schemas";
+import { trpc } from "@/trpc/client";
+
+const MEAL_CONFIG: Record<
+	MealType,
+	{ label: string; emoji: string; defaultStart: string; defaultEnd: string }
+> = {
+	breakfast: {
+		label: "Breakfast",
+		emoji: "🌅",
+		defaultStart: "07:00",
+		defaultEnd: "09:00",
+	},
+	lunch: {
+		label: "Lunch",
+		emoji: "☀️",
+		defaultStart: "12:00",
+		defaultEnd: "14:00",
+	},
+	dinner: {
+		label: "Dinner",
+		emoji: "🌙",
+		defaultStart: "19:00",
+		defaultEnd: "21:00",
+	},
+};
+
+const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner"];
+
+const editMenuSchema = z.object({
+	items: z.string().trim().min(1, "Menu items are required").max(2000),
+	startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format"),
+	endTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format"),
+});
+
+type EditMenuValues = z.infer<typeof editMenuSchema>;
+
+type FoodMenuRecord = {
+	id: string;
+	mealType: MealType;
+	items: string;
+	startTime: string;
+	endTime: string;
+};
+
+function EditMenuDialog({
+	mealType,
+	existing,
+	open,
+	onOpenChange,
+	onSuccess,
+}: {
+	mealType: MealType;
+	existing: FoodMenuRecord | null | undefined;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSuccess: () => void;
+}) {
+	const config = MEAL_CONFIG[mealType];
+	const form = useZodForm({
+		schema: editMenuSchema,
+		values: {
+			items: existing?.items ?? "",
+			startTime: existing?.startTime ?? config.defaultStart,
+			endTime: existing?.endTime ?? config.defaultEnd,
+		},
+	});
+
+	const upsert = trpc.organization.foodMenu.upsert.useMutation({
+		onSuccess: () => {
+			toast.success(`${config.label} menu updated`);
+			onSuccess();
+			onOpenChange(false);
+		},
+		onError: (err) => {
+			toast.error(err.message);
+		},
+	});
+
+	function onSubmit(values: EditMenuValues) {
+		upsert.mutate({ mealType, ...values });
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>
+						{config.emoji} Edit {config.label} Menu
+					</DialogTitle>
+					<DialogDescription>
+						Set the food items and serving time for {config.label.toLowerCase()}
+						.
+					</DialogDescription>
+				</DialogHeader>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+						<div className="grid grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="startTime"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Start Time</FormLabel>
+										<FormControl>
+											<Input type="time" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="endTime"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>End Time</FormLabel>
+										<FormControl>
+											<Input type="time" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+						<FormField
+							control={form.control}
+							name="items"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Menu Items</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder={"e.g.\nParatha\nEgg\nTea\nYogurt"}
+											rows={6}
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+									<p className="text-muted-foreground text-xs">
+										Enter each item on a new line.
+									</p>
+								</FormItem>
+							)}
+						/>
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => onOpenChange(false)}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" disabled={upsert.isPending}>
+								{upsert.isPending ? "Saving…" : "Save Menu"}
+							</Button>
+						</DialogFooter>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+function MealCard({
+	mealType,
+	menu,
+	onEdit,
+}: {
+	mealType: MealType;
+	menu: FoodMenuRecord | null | undefined;
+	onEdit: () => void;
+}) {
+	const config = MEAL_CONFIG[mealType];
+	const items = menu?.items
+		? menu.items.split("\n").filter((l) => l.trim().length > 0)
+		: [];
+
+	return (
+		<div className="rounded-xl border bg-card p-5 flex flex-col gap-4">
+			<div className="flex items-start justify-between gap-2">
+				<div className="flex items-center gap-2">
+					<span className="text-2xl">{config.emoji}</span>
+					<div>
+						<h3 className="font-semibold text-base leading-tight">
+							{config.label}
+						</h3>
+						{menu ? (
+							<div className="flex items-center gap-1 mt-0.5 text-muted-foreground text-xs">
+								<Clock className="size-3" />
+								<span>
+									{menu.startTime} – {menu.endTime}
+								</span>
+							</div>
+						) : (
+							<span className="text-muted-foreground text-xs">
+								No timing set
+							</span>
+						)}
+					</div>
+				</div>
+				<Button
+					size="sm"
+					variant="outline"
+					onClick={onEdit}
+					className="shrink-0"
+				>
+					<Pencil className="size-3.5 mr-1" />
+					Edit
+				</Button>
+			</div>
+
+			{items.length > 0 ? (
+				<div className="flex flex-wrap gap-1.5">
+					{items.map((item) => (
+						<Badge
+							key={item}
+							variant="secondary"
+							className="text-xs font-normal"
+						>
+							{item.trim()}
+						</Badge>
+					))}
+				</div>
+			) : (
+				<div className="flex flex-col items-center justify-center gap-2 py-6 text-muted-foreground">
+					<UtensilsCrossed className="size-8 opacity-30" />
+					<p className="text-sm">No menu set yet</p>
+				</div>
+			)}
+		</div>
+	);
+}
+
+export function FoodMenu() {
+	const [editingMeal, setEditingMeal] = useState<MealType | null>(null);
+
+	const {
+		data: menus,
+		isLoading,
+		refetch,
+	} = trpc.organization.foodMenu.listAll.useQuery();
+
+	const menuByType = (mealType: MealType) =>
+		(menus as FoodMenuRecord[] | undefined)?.find(
+			(m) => m.mealType === mealType,
+		) ?? null;
+
+	if (isLoading) {
+		return (
+			<div className="grid gap-4 sm:grid-cols-3">
+				{MEAL_TYPES.map((t) => (
+					<Skeleton key={t} className="h-44 rounded-xl" />
+				))}
+			</div>
+		);
+	}
+
+	return (
+		<>
+			<div className="grid gap-4 sm:grid-cols-3">
+				{MEAL_TYPES.map((mealType) => (
+					<MealCard
+						key={mealType}
+						mealType={mealType}
+						menu={menuByType(mealType)}
+						onEdit={() => setEditingMeal(mealType)}
+					/>
+				))}
+			</div>
+
+			{editingMeal && (
+				<EditMenuDialog
+					mealType={editingMeal}
+					existing={menuByType(editingMeal)}
+					open={!!editingMeal}
+					onOpenChange={(open) => {
+						if (!open) setEditingMeal(null);
+					}}
+					onSuccess={() => refetch()}
+				/>
+			)}
+		</>
+	);
+}

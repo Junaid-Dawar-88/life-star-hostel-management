@@ -2,6 +2,7 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { Camera, X } from "lucide-react";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -46,14 +47,15 @@ const studentSchema = z.object({
 		.min(10, "Guardian phone is required")
 		.regex(/^[0-9+\-\s()]+$/, "Invalid phone number"),
 	address: z.string().min(1, "Address is required"),
-	fee: z.number().min(0, "Fee must be 0 or more"),
-	remainingFee: z.number().min(0, "Remaining fee must be 0 or more"),
 	picture: z.string().optional(),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;
 
-export type StudentData = StudentFormValues & { id: string };
+export type StudentData = StudentFormValues & {
+	id: string;
+	fee: number;
+};
 
 export type StudentModalProps = NiceModalHocProps & {
 	roomId?: string;
@@ -100,8 +102,6 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 						phone: student.phone,
 						guardianPhone: student.guardianPhone,
 						address: student.address,
-						fee: student.fee,
-						remainingFee: student.remainingFee,
 						picture: student.picture,
 					}
 				: {
@@ -111,8 +111,6 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 						phone: "",
 						guardianPhone: "",
 						address: "",
-						fee: 0,
-						remainingFee: 0,
 						picture: undefined,
 					},
 		});
@@ -180,10 +178,11 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 											className="group relative h-24 w-24 overflow-hidden rounded-full border-2 border-dashed border-border bg-muted transition-colors hover:border-primary hover:bg-muted/80"
 										>
 											{preview ? (
-												<img
+												<Image
 													src={preview}
 													alt="Student"
-													className="h-full w-full object-cover"
+													fill
+													className="object-cover"
 												/>
 											) : (
 												<div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
@@ -341,64 +340,6 @@ export const StudentModal = NiceModal.create<StudentModalProps>(
 											</FormItem>
 										)}
 									/>
-
-									{/* Fee + Remaining Fee */}
-									<div className="grid grid-cols-2 gap-4">
-										<FormField
-											control={form.control}
-											name="fee"
-											render={({ field }) => (
-												<FormItem asChild>
-													<Field>
-														<FormLabel>Total Fee</FormLabel>
-														<FormControl>
-															<Input
-																type="number"
-																min={0}
-																placeholder="5000"
-																autoComplete="off"
-																value={field.value as number}
-																onChange={(e) =>
-																	field.onChange(e.target.valueAsNumber)
-																}
-																onBlur={field.onBlur}
-																name={field.name}
-																ref={field.ref}
-															/>
-														</FormControl>
-														<FormMessage />
-													</Field>
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={form.control}
-											name="remainingFee"
-											render={({ field }) => (
-												<FormItem asChild>
-													<Field>
-														<FormLabel>Remaining Fee</FormLabel>
-														<FormControl>
-															<Input
-																type="number"
-																min={0}
-																placeholder="0"
-																autoComplete="off"
-																value={field.value as number}
-																onChange={(e) =>
-																	field.onChange(e.target.valueAsNumber)
-																}
-																onBlur={field.onBlur}
-																name={field.name}
-																ref={field.ref}
-															/>
-														</FormControl>
-														<FormMessage />
-													</Field>
-												</FormItem>
-											)}
-										/>
-									</div>
 								</div>
 							</ScrollArea>
 

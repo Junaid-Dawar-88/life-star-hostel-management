@@ -99,6 +99,8 @@ model Organization {
     invitations Invitation[]
     rooms       Room[]
     students    Student[]
+    feePayments FeePayment[]
+    foodMenus   FoodMenu[]
 
     @@unique([slug], map: "organization_slug_idx")
     @@index([name], map: "organization_name_idx")
@@ -219,12 +221,53 @@ model Student {
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    room         Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    feePayments  FeePayment[]
 
     @@index([organizationId], map: "student_organization_id_idx")
     @@index([roomId], map: "student_room_id_idx")
     @@index([nic], map: "student_nic_idx")
     @@index([organizationId, roomId], map: "student_org_room_idx")
     @@map("student")
+}
+
+model FeePayment {
+    id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    organizationId String  @map("organization_id") @db.Uuid
+    studentId      String  @map("student_id") @db.Uuid
+    amount         Int
+    month          Int
+    year           Int
+    notes          String? @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+    @@unique([studentId, month, year], map: "fee_payment_student_month_year_idx")
+    @@index([organizationId], map: "fee_payment_organization_id_idx")
+    @@index([studentId], map: "fee_payment_student_id_idx")
+    @@index([organizationId, month, year], map: "fee_payment_org_month_year_idx")
+    @@map("fee_payment")
+}
+
+model FoodMenu {
+    id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    organizationId String   @map("organization_id") @db.Uuid
+    mealType       String   @map("meal_type") @db.Text
+    items          String   @db.Text
+    startTime      String   @map("start_time") @db.Text
+    endTime        String   @map("end_time") @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+    @@unique([organizationId, mealType], map: "food_menu_org_meal_type_idx")
+    @@index([organizationId], map: "food_menu_organization_id_idx")
+    @@map("food_menu")
 }

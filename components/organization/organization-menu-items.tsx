@@ -1,10 +1,12 @@
 "use client";
 
 import {
+	BadgeDollarSign,
 	ChevronRight,
 	LayoutDashboardIcon,
 	SettingsIcon,
 	UserSearchIcon,
+	UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -65,6 +67,16 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					label: "Rooms",
 					href: `${basePath}/rooms`,
 					icon: UserSearchIcon,
+				},
+				{
+					label: "Fee Payments",
+					href: `${basePath}/fees`,
+					icon: BadgeDollarSign,
+				},
+				{
+					label: "Food Menu",
+					href: `${basePath}/food-menu`,
+					icon: UtensilsCrossed,
 				},
 			],
 			collapsible: false,

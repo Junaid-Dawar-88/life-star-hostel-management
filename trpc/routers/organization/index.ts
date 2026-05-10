@@ -11,6 +11,8 @@ import {
 	getOrganizationByIdSchema,
 } from "@/schemas/organization-schemas";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { organizationFeePaymentRouter } from "./organization-fee-payment-router";
+import { organizationFoodMenuRouter } from "./organization-food-menu-router";
 import { organizationRoomRouter } from "./organization-room-router";
 import { organizationStudentRouter } from "./organization-student-router";
 
@@ -105,4 +107,6 @@ export const organizationRouter = createTRPCRouter({
 
 	room: organizationRoomRouter,
 	student: organizationStudentRouter,
+	feePayment: organizationFeePaymentRouter,
+	foodMenu: organizationFoodMenuRouter,
 });

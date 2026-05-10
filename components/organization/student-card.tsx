@@ -1,7 +1,12 @@
 "use client";
 
 import {
+	AlertCircle,
 	BadgeDollarSign,
+	CheckCircle2,
+	ChevronLeft,
+	ChevronRight,
+	FileText,
 	MapPin,
 	MoreVertical,
 	Pencil,
@@ -10,7 +15,8 @@ import {
 	Trash2,
 	User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -28,6 +34,7 @@ import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -38,12 +45,31 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/trpc/client";
+import { useSelectedMonth } from "./selected-month-context";
 import type { StudentData } from "./student-modal";
 
 export type StudentCardProps = StudentData & {
 	onEdit?: () => void;
 	onDelete?: (id: string) => void;
 };
+
+const MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 
 function initials(name: string) {
 	return name
@@ -80,6 +106,273 @@ function DetailRow({
 	);
 }
 
+function PayFeeDialog({
+	studentId,
+	studentName,
+	defaultFee,
+	open,
+	onOpenChange,
+	onSuccess,
+}: {
+	studentId: string;
+	studentName: string;
+	defaultFee: number;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSuccess?: () => void;
+}) {
+	const { month: selectedMonth, year: selectedYear } = useSelectedMonth();
+	const [month, setMonth] = useState(selectedMonth);
+	const [year, setYear] = useState(selectedYear);
+	const [amount, setAmount] = useState(
+		defaultFee > 0 ? String(defaultFee) : "",
+	);
+	const [notes, setNotes] = useState("");
+
+	// Reset to currently selected month whenever dialog opens
+	useEffect(() => {
+		if (open) {
+			setMonth(selectedMonth);
+			setYear(selectedYear);
+			setAmount(defaultFee > 0 ? String(defaultFee) : "");
+			setNotes("");
+		}
+	}, [open, defaultFee, selectedMonth, selectedYear]);
+
+	const prevMonth = () => {
+		if (month === 1) {
+			setMonth(12);
+			setYear(year - 1);
+		} else setMonth(month - 1);
+	};
+
+	const nextMonth = () => {
+		if (month === 12) {
+			setMonth(1);
+			setYear(year + 1);
+		} else setMonth(month + 1);
+	};
+
+	const utils = trpc.useUtils();
+
+	const recordPayment = trpc.organization.feePayment.recordPayment.useMutation({
+		onSuccess: () => {
+			toast.success(`Payment recorded for ${MONTHS[month - 1]} ${year}`);
+			utils.organization.feePayment.listByStudent.invalidate({ studentId });
+			onOpenChange(false);
+			onSuccess?.();
+		},
+		onError: (err) => toast.error(err.message),
+	});
+
+	const handleSubmit = () => {
+		const amt = Number(amount);
+		if (Number.isNaN(amt) || amt < 1) {
+			toast.error("Enter a valid amount greater than 0");
+			return;
+		}
+		recordPayment.mutate({
+			studentId,
+			amount: Math.floor(amt),
+			month,
+			year,
+			notes: notes.trim() || undefined,
+		});
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-sm">
+				<DialogHeader>
+					<DialogTitle>Record Fee Payment</DialogTitle>
+					<DialogDescription>
+						Recording payment for{" "}
+						<span className="font-medium text-foreground">{studentName}</span>
+					</DialogDescription>
+				</DialogHeader>
+
+				<div className="space-y-4">
+					{/* Month selector */}
+					<div>
+						<p className="mb-1.5 text-sm font-medium">Month</p>
+						<div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+							<button
+								type="button"
+								onClick={prevMonth}
+								className="rounded p-0.5 hover:bg-muted transition-colors"
+							>
+								<ChevronLeft className="h-4 w-4 text-muted-foreground" />
+							</button>
+							<span className="flex-1 text-center text-sm font-semibold text-foreground">
+								{MONTHS[month - 1]} {year}
+							</span>
+							<button
+								type="button"
+								onClick={nextMonth}
+								className="rounded p-0.5 hover:bg-muted transition-colors"
+							>
+								<ChevronRight className="h-4 w-4 text-muted-foreground" />
+							</button>
+						</div>
+					</div>
+
+					{/* Amount */}
+					<div>
+						<p className="mb-1.5 text-sm font-medium">Amount Paid (Rs)</p>
+						<div className="relative">
+							<BadgeDollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+							<Input
+								type="number"
+								min={1}
+								placeholder={defaultFee > 0 ? String(defaultFee) : "e.g. 5000"}
+								value={amount}
+								onChange={(e) => setAmount(e.target.value)}
+								onKeyDown={(e) => e.key === "Escape" && onOpenChange(false)}
+								autoFocus
+								className="pl-9"
+							/>
+						</div>
+						{defaultFee > 0 && (
+							<p className="mt-1 text-xs text-muted-foreground">
+								Monthly fee: Rs {defaultFee.toLocaleString()}
+							</p>
+						)}
+					</div>
+
+					{/* Notes */}
+					<div>
+						<p className="mb-1.5 text-sm font-medium">
+							Notes{" "}
+							<span className="font-normal text-muted-foreground">
+								(optional)
+							</span>
+						</p>
+						<div className="relative">
+							<FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+							<Textarea
+								placeholder="Receipt number, payment method…"
+								value={notes}
+								onChange={(e) => setNotes(e.target.value)}
+								className="min-h-20 pl-9 resize-none"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<DialogFooter className="gap-2 sm:gap-0">
+					<Button
+						variant="outline"
+						onClick={() => onOpenChange(false)}
+						disabled={recordPayment.isPending}
+					>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleSubmit}
+						disabled={recordPayment.isPending}
+						className="bg-emerald-600 hover:bg-emerald-700 text-white"
+					>
+						<CheckCircle2 className="mr-2 h-4 w-4" />
+						{recordPayment.isPending ? "Recording…" : "Record Payment"}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+function PaymentDetailDialog({
+	open,
+	onOpenChange,
+	studentName,
+	fee,
+	paidAmount,
+	remaining,
+	currentMonth,
+	currentYear,
+	onRecordPayment,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	studentName: string;
+	fee: number;
+	paidAmount: number;
+	remaining: number;
+	currentMonth: number;
+	currentYear: number;
+	onRecordPayment: () => void;
+}) {
+	const isPaid = remaining === 0;
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-sm">
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						{isPaid ? (
+							<CheckCircle2 className="h-5 w-5 text-emerald-500" />
+						) : (
+							<AlertCircle className="h-5 w-5 text-rose-500" />
+						)}
+						Payment Details
+					</DialogTitle>
+					<DialogDescription>
+						{MONTHS[currentMonth - 1]} {currentYear}
+					</DialogDescription>
+				</DialogHeader>
+
+				<div className="rounded-xl border border-border/60 overflow-hidden divide-y divide-border/60">
+					<div className="flex items-center justify-between px-4 py-3">
+						<span className="text-sm text-muted-foreground">Student</span>
+						<span className="text-sm font-semibold text-foreground">
+							{studentName}
+						</span>
+					</div>
+					<div className="flex items-center justify-between px-4 py-3">
+						<span className="text-sm text-muted-foreground">Monthly Fee</span>
+						<span className="text-sm font-semibold text-foreground">
+							Rs {fee.toLocaleString()}
+						</span>
+					</div>
+					<div className="flex items-center justify-between px-4 py-3">
+						<span className="text-sm text-muted-foreground">Amount Paid</span>
+						<span
+							className={`text-sm font-semibold ${paidAmount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
+						>
+							{paidAmount > 0 ? `Rs ${paidAmount.toLocaleString()}` : "—"}
+						</span>
+					</div>
+					<div className="flex items-center justify-between px-4 py-3 bg-muted/30">
+						<span className="text-sm font-medium">Remaining</span>
+						<span
+							className={`text-sm font-bold ${remaining > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}
+						>
+							{remaining > 0
+								? `Rs ${remaining.toLocaleString()}`
+								: "Fully Paid"}
+						</span>
+					</div>
+				</div>
+
+				{!isPaid && (
+					<DialogFooter>
+						<Button
+							className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+							onClick={() => {
+								onOpenChange(false);
+								onRecordPayment();
+							}}
+						>
+							<BadgeDollarSign className="mr-2 h-4 w-4" />
+							Record Payment
+						</Button>
+					</DialogFooter>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 export function StudentCard({
 	id,
 	name,
@@ -89,16 +382,30 @@ export function StudentCard({
 	guardianPhone,
 	address,
 	fee,
-	remainingFee,
 	picture,
 	onEdit,
 	onDelete,
 }: StudentCardProps) {
+	const { month: currentMonth, year: currentYear } = useSelectedMonth();
+
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [detailOpen, setDetailOpen] = useState(false);
+	const [payOpen, setPayOpen] = useState(false);
+	const [paymentDetailOpen, setPaymentDetailOpen] = useState(false);
 
-	const paid = fee - remainingFee;
-	const paidPct = fee > 0 ? Math.round((paid / fee) * 100) : 0;
+	const { data: payments = [] } =
+		trpc.organization.feePayment.listByStudent.useQuery(
+			{ studentId: id },
+			{ staleTime: 0, refetchOnWindowFocus: true },
+		);
+
+	const currentPayment = payments.find(
+		(p) => p.month === currentMonth && p.year === currentYear,
+	);
+	const paidAmount = currentPayment?.amount ?? 0;
+	const remaining = fee > 0 ? Math.max(0, fee - paidAmount) : 0;
+	const isPending = fee > 0 && remaining > 0;
+	const isPaid = fee > 0 && remaining === 0;
 
 	return (
 		<>
@@ -125,6 +432,28 @@ export function StudentCard({
 				</AlertDialogContent>
 			</AlertDialog>
 
+			{/* Pay fee dialog */}
+			<PayFeeDialog
+				studentId={id}
+				studentName={name}
+				defaultFee={fee}
+				open={payOpen}
+				onOpenChange={setPayOpen}
+			/>
+
+			{/* Payment detail dialog */}
+			<PaymentDetailDialog
+				open={paymentDetailOpen}
+				onOpenChange={setPaymentDetailOpen}
+				studentName={name}
+				fee={fee}
+				paidAmount={paidAmount}
+				remaining={remaining}
+				currentMonth={currentMonth}
+				currentYear={currentYear}
+				onRecordPayment={() => setPayOpen(true)}
+			/>
+
 			{/* Detail popup */}
 			<Dialog open={detailOpen} onOpenChange={setDetailOpen}>
 				<DialogContent className="sm:max-w-md">
@@ -148,15 +477,21 @@ export function StudentCard({
 								S/O {fatherName}
 							</p>
 						</div>
-						{remainingFee > 0 ? (
-							<Badge className="bg-rose-100 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40">
-								Rs {remainingFee.toLocaleString()} pending
+						<div className="flex items-center gap-2">
+							<Badge className="bg-indigo-100 text-indigo-700 border-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/40">
+								Rs {fee.toLocaleString()} / month
 							</Badge>
-						) : (
-							<Badge className="bg-emerald-100 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40">
-								Fully paid
-							</Badge>
-						)}
+							{isPending && (
+								<Badge className="bg-rose-100 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40">
+									Rs {remaining.toLocaleString()} due
+								</Badge>
+							)}
+							{isPaid && (
+								<Badge className="bg-emerald-100 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40">
+									Paid
+								</Badge>
+							)}
+						</div>
 					</div>
 
 					{/* Details */}
@@ -184,49 +519,37 @@ export function StudentCard({
 					</div>
 
 					{/* Fee section */}
-					<div className="rounded-xl border border-border/60 p-4 space-y-3">
-						<div className="flex items-center justify-between text-xs">
-							<span className="font-medium text-muted-foreground">
-								Fee Progress
-							</span>
-							<span className="font-semibold text-foreground">
-								{paidPct}% paid
-							</span>
-						</div>
-						<div className="h-2 overflow-hidden rounded-full bg-muted">
-							<div
-								className="h-full rounded-full bg-emerald-500 transition-all"
-								style={{ width: `${paidPct}%` }}
+					<div className="space-y-2">
+						<DetailRow
+							icon={
+								<BadgeDollarSign className="h-3.5 w-3.5 text-emerald-500" />
+							}
+							label="Monthly Fee"
+							value={`Rs ${fee.toLocaleString()}`}
+							valueClass="text-emerald-600 dark:text-emerald-400"
+						/>
+						{fee > 0 && (
+							<DetailRow
+								icon={
+									remaining > 0 ? (
+										<AlertCircle className="h-3.5 w-3.5 text-rose-500" />
+									) : (
+										<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+									)
+								}
+								label={`Remaining (${MONTHS[currentMonth - 1]})`}
+								value={
+									remaining > 0
+										? `Rs ${remaining.toLocaleString()}`
+										: "Fully Paid"
+								}
+								valueClass={
+									remaining > 0
+										? "text-rose-600 dark:text-rose-400"
+										: "text-emerald-600 dark:text-emerald-400"
+								}
 							/>
-						</div>
-						<div className="grid grid-cols-3 gap-2 pt-1">
-							<div className="text-center">
-								<p className="text-[0.6rem] font-medium uppercase tracking-wider text-muted-foreground">
-									Total
-								</p>
-								<p className="text-sm font-bold text-foreground">
-									Rs {fee.toLocaleString()}
-								</p>
-							</div>
-							<div className="text-center">
-								<p className="text-[0.6rem] font-medium uppercase tracking-wider text-muted-foreground">
-									Paid
-								</p>
-								<p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-									Rs {paid.toLocaleString()}
-								</p>
-							</div>
-							<div className="text-center">
-								<p className="text-[0.6rem] font-medium uppercase tracking-wider text-muted-foreground">
-									Remaining
-								</p>
-								<p
-									className={`text-sm font-bold ${remainingFee > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}
-								>
-									Rs {remainingFee.toLocaleString()}
-								</p>
-							</div>
-						</div>
+						)}
 					</div>
 
 					{/* Actions */}
@@ -241,6 +564,18 @@ export function StudentCard({
 						>
 							<Pencil className="mr-2 h-3.5 w-3.5" />
 							Edit
+						</Button>
+						<Button
+							className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+							onClick={() => {
+								setDetailOpen(false);
+								setPayOpen(true);
+							}}
+							disabled={fee === 0}
+							title={fee === 0 ? "Set a monthly fee first" : undefined}
+						>
+							<BadgeDollarSign className="mr-2 h-3.5 w-3.5" />
+							Pay Fee
 						</Button>
 						<Button
 							variant="outline"
@@ -300,7 +635,7 @@ export function StudentCard({
 									<span className="sr-only">Student options</span>
 								</Button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-36">
+							<DropdownMenuContent align="end" className="w-40">
 								<DropdownMenuItem
 									onClick={(e) => {
 										e.stopPropagation();
@@ -309,6 +644,16 @@ export function StudentCard({
 								>
 									<Pencil className="mr-2 h-3.5 w-3.5" />
 									Edit
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										setPayOpen(true);
+									}}
+									disabled={fee === 0}
+								>
+									<BadgeDollarSign className="mr-2 h-3.5 w-3.5 text-emerald-500" />
+									Pay Fee
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
@@ -366,22 +711,60 @@ export function StudentCard({
 
 						<div className="flex items-center gap-2 text-[0.68rem]">
 							<BadgeDollarSign className="h-3 w-3 shrink-0 text-emerald-500" />
-							<span className="text-muted-foreground">Total Fee</span>
-							<span className="ml-auto font-semibold text-foreground">
-								Rs {fee.toLocaleString()}
+							<span className="text-muted-foreground">Monthly Fee</span>
+							<span className="ml-auto font-semibold text-emerald-600 dark:text-emerald-400">
+								{fee > 0 ? `Rs ${fee.toLocaleString()}` : "Not set"}
 							</span>
 						</div>
 
-						<div className="flex items-center gap-2 text-[0.68rem]">
-							<BadgeDollarSign className="h-3 w-3 shrink-0 text-rose-400" />
-							<span className="text-muted-foreground">Remaining</span>
-							<span
-								className={`ml-auto font-semibold ${remainingFee > 0 ? "text-rose-500" : "text-emerald-500"}`}
-							>
-								Rs {remainingFee.toLocaleString()}
-							</span>
-						</div>
+						{fee > 0 && (
+							<div className="flex items-center gap-2 text-[0.68rem]">
+								{remaining > 0 ? (
+									<AlertCircle className="h-3 w-3 shrink-0 text-rose-500" />
+								) : (
+									<CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-500" />
+								)}
+								<span className="text-muted-foreground">
+									{MONTHS[currentMonth - 1]}
+								</span>
+								<span
+									className={`ml-auto font-semibold ${remaining > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}
+								>
+									{remaining > 0
+										? `Rs ${remaining.toLocaleString()} due`
+										: "Paid"}
+								</span>
+							</div>
+						)}
 					</div>
+
+					{/* Status bar */}
+					{fee > 0 &&
+						(isPending ? (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									setPaymentDetailOpen(true);
+								}}
+								className="mt-0.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-200/70 bg-rose-50/70 py-1.5 text-[0.72rem] font-semibold text-rose-700 transition-colors hover:bg-rose-100/90 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
+							>
+								<AlertCircle className="h-3.5 w-3.5" />
+								Pending — Rs {remaining.toLocaleString()} remaining
+							</button>
+						) : (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									setPaymentDetailOpen(true);
+								}}
+								className="mt-0.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-200/60 bg-emerald-50/60 py-1.5 text-[0.72rem] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100/80 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+							>
+								<CheckCircle2 className="h-3.5 w-3.5" />
+								Paid — Rs {paidAmount.toLocaleString()}
+							</button>
+						))}
 				</div>
 			</div>
 		</>

@@ -4,6 +4,7 @@ import {
 	createStudentSchema,
 	deleteStudentSchema,
 	listStudentsSchema,
+	setFeeForAllSchema,
 	updateStudentSchema,
 } from "@/schemas/organization-student-schemas";
 import { createTRPCRouter, protectedOrganizationProcedure } from "@/trpc/init";
@@ -82,5 +83,15 @@ export const organizationStudentRouter = createTRPCRouter({
 				});
 			}
 			return { success: true };
+		}),
+
+	setFeeForAll: protectedOrganizationProcedure
+		.input(setFeeForAllSchema)
+		.mutation(async ({ ctx, input }) => {
+			const result = await prisma.student.updateMany({
+				where: { organizationId: ctx.organization.id },
+				data: { fee: input.fee },
+			});
+			return { updatedCount: result.count };
 		}),
 });

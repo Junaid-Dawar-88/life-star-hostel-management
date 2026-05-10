@@ -19,8 +19,6 @@ export const createStudentSchema = z.object({
 		.min(10, "Guardian phone is required")
 		.regex(/^[0-9+\-\s()]+$/, "Invalid phone number"),
 	address: z.string().trim().min(1, "Address is required").max(500),
-	fee: z.number().int().min(0),
-	remainingFee: z.number().int().min(0),
 	picture: z.string().optional(),
 });
 
@@ -44,12 +42,15 @@ export const updateStudentSchema = z.object({
 		.optional(),
 	address: z.string().trim().min(1).max(500).optional(),
 	fee: z.number().int().min(0).optional(),
-	remainingFee: z.number().int().min(0).optional(),
 	picture: z.string().optional().nullable(),
 });
 
 export const deleteStudentSchema = z.object({
 	id: z.string().uuid(),
+});
+
+export const setFeeForAllSchema = z.object({
+	fee: z.number().int().min(0),
 });
 
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;

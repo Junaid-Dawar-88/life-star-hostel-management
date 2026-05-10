@@ -1,16 +1,21 @@
 "use client";
 
 import {
+	AlertCircle,
 	BadgeDollarSign,
 	BedDouble,
+	CheckCircle2,
 	DoorOpen,
 	TrendingDown,
 	UserPlus,
 	Users,
 } from "lucide-react";
 import type * as React from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/trpc/client";
+import { useSelectedMonth } from "./selected-month-context";
 
 const seatCount: Record<string, number> = {
 	"1_seater": 1,
@@ -139,6 +144,136 @@ function ActivityFeedSkeleton() {
 	);
 }
 
+const MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
+
+function studentInitials(name: string) {
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.slice(0, 2)
+		.join("")
+		.toUpperCase();
+}
+
+function PendingFeesCard() {
+	const { month, year } = useSelectedMonth();
+
+	const { data: students = [], isLoading } =
+		trpc.organization.feePayment.listByMonth.useQuery(
+			{ month, year },
+			{ staleTime: 0 },
+		);
+
+	const pending = students.filter((s) => {
+		const paid = s.payment?.amount ?? 0;
+		return s.fee > 0 && paid < s.fee;
+	});
+
+	return (
+		<div className="rounded-2xl border border-border/60 bg-card shadow-sm flex flex-col">
+			<div className="border-b border-border/60 px-6 py-4">
+				<div className="flex items-center justify-between gap-2">
+					<div>
+						<h2 className="text-sm font-semibold flex items-center gap-1.5">
+							<AlertCircle className="h-4 w-4 text-rose-500" />
+							Pending Fees
+						</h2>
+						<p className="text-xs text-muted-foreground mt-0.5">
+							{MONTHS[month - 1]} {year}
+						</p>
+					</div>
+					{!isLoading && (
+						<Badge
+							className={
+								pending.length === 0
+									? "bg-emerald-100 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400"
+									: "bg-rose-100 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-400"
+							}
+						>
+							{pending.length === 0 ? "All paid" : `${pending.length} pending`}
+						</Badge>
+					)}
+				</div>
+			</div>
+
+			<div className="flex-1 overflow-auto px-6 py-4">
+				{isLoading ? (
+					<div className="space-y-3">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div key={i} className="flex items-center gap-3">
+								<Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+								<div className="flex-1 space-y-1.5">
+									<Skeleton className="h-3.5 w-32" />
+									<Skeleton className="h-3 w-20" />
+								</div>
+								<Skeleton className="h-5 w-16 rounded-full" />
+							</div>
+						))}
+					</div>
+				) : pending.length === 0 ? (
+					<div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+						<CheckCircle2 className="h-8 w-8 text-emerald-500/60" />
+						<p className="text-sm font-medium text-muted-foreground">
+							All fees collected
+						</p>
+						<p className="text-xs text-muted-foreground">
+							Every student has paid for {MONTHS[month - 1]}
+						</p>
+					</div>
+				) : (
+					<div className="space-y-2.5">
+						{pending.map((s) => {
+							const paid = s.payment?.amount ?? 0;
+							const remaining = s.fee - paid;
+							return (
+								<div
+									key={s.id}
+									className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5"
+								>
+									<Avatar className="h-8 w-8 shrink-0 rounded-lg">
+										<AvatarFallback className="rounded-lg bg-rose-50 text-[0.65rem] font-bold text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+											{studentInitials(s.name)}
+										</AvatarFallback>
+									</Avatar>
+									<div className="flex-1 min-w-0">
+										<p className="text-sm font-semibold text-foreground truncate">
+											{s.name}
+										</p>
+										<p className="text-[0.68rem] text-muted-foreground">
+											{s.room?.name ?? "—"}
+											{paid > 0 && (
+												<span className="ml-1 text-amber-600 dark:text-amber-400">
+													· Rs {paid.toLocaleString()} paid
+												</span>
+											)}
+										</p>
+									</div>
+									<span className="shrink-0 text-xs font-bold text-rose-600 dark:text-rose-400">
+										Rs {remaining.toLocaleString()}
+									</span>
+								</div>
+							);
+						})}
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
 export function HostelDashboard() {
 	const { data: rooms = [], isLoading } = trpc.organization.room.list.useQuery(
 		{},
@@ -228,32 +363,38 @@ export function HostelDashboard() {
 				)}
 			</div>
 
-			{/* Recent activity */}
-			<div className="rounded-2xl border border-border/60 bg-card shadow-sm">
-				<div className="border-b border-border/60 px-6 py-4">
-					<h2 className="text-sm font-semibold">Recent Activity</h2>
-					<p className="text-xs text-muted-foreground">
-						Latest room and student additions
-					</p>
+			{/* Bottom grid: Activity + Pending Fees */}
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				{/* Recent activity */}
+				<div className="rounded-2xl border border-border/60 bg-card shadow-sm">
+					<div className="border-b border-border/60 px-6 py-4">
+						<h2 className="text-sm font-semibold">Recent Activity</h2>
+						<p className="text-xs text-muted-foreground">
+							Latest room and student additions
+						</p>
+					</div>
+					<div className="px-6 py-5">
+						{isLoading ? (
+							<ActivityFeedSkeleton />
+						) : activityFeed.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-10 text-center">
+								<p className="text-sm text-muted-foreground">No activity yet</p>
+								<p className="mt-1 text-xs text-muted-foreground">
+									Add rooms and students to see activity here.
+								</p>
+							</div>
+						) : (
+							<div className="space-y-4">
+								{activityFeed.map((event, i) => (
+									<ActivityRow key={i} event={event} />
+								))}
+							</div>
+						)}
+					</div>
 				</div>
-				<div className="px-6 py-5">
-					{isLoading ? (
-						<ActivityFeedSkeleton />
-					) : activityFeed.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-10 text-center">
-							<p className="text-sm text-muted-foreground">No activity yet</p>
-							<p className="mt-1 text-xs text-muted-foreground">
-								Add rooms and students to see activity here.
-							</p>
-						</div>
-					) : (
-						<div className="space-y-4">
-							{activityFeed.map((event, i) => (
-								<ActivityRow key={i} event={event} />
-							))}
-						</div>
-					)}
-				</div>
+
+				{/* Pending fees */}
+				<PendingFeesCard />
 			</div>
 		</div>
 	);
