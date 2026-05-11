@@ -136,7 +136,7 @@ export function TRPCProvider({
 					}),
 					httpBatchLink({
 						transformer: superjson,
-						url: `${getBaseUrl()}/api/trpc`,
+						url: "/api/trpc",
 						fetch: (input, init) =>
 							fetch(input, {
 								credentials: "include",
