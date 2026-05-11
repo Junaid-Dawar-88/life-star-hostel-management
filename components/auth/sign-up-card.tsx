@@ -62,11 +62,16 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 
 	const onSubmit = methods.handleSubmit(async ({ email, password, name }) => {
 		try {
+			const callbackURL = new URL(
+				redirectPath,
+				window.location.origin,
+			).toString();
+
 			const { error } = await authClient.signUp.email({
 				email,
 				password,
 				name,
-				callbackURL: redirectPath,
+				callbackURL,
 			});
 			if (error) {
 				throw error;
