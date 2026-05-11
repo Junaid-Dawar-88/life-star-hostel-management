@@ -121,14 +121,6 @@ export const auth = betterAuth({
 	plugins: [
 		username(),
 		admin(),
-		...(env.TURNSTILE_SECRET_KEY
-			? [
-					captcha({
-						provider: "cloudflare-turnstile",
-						secretKey: env.TURNSTILE_SECRET_KEY,
-					}),
-				]
-			: []),
 		organization({
 			sendInvitationEmail: async (
 				{ email, inviter, id, organization },

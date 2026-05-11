@@ -18,7 +18,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { InputPassword } from "@/components/ui/custom/input-password";
-import { TurnstileCaptcha } from "@/components/ui/custom/turnstile";
 import { Field } from "@/components/ui/field";
 import {
 	Form,
@@ -37,13 +36,9 @@ import {
 import { authConfig } from "@/config/auth.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
-import { useTurnstile } from "@/hooks/use-turnstile";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
-import {
-	CAPTCHA_RESPONSE_HEADER,
-	getAuthErrorMessage,
-} from "@/lib/auth/constants";
+import { getAuthErrorMessage } from "@/lib/auth/constants";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
 import { signInSchema } from "@/schemas/auth-schemas";
 
@@ -51,16 +46,6 @@ export function SignInCard(): React.JSX.Element {
 	const router = useProgressRouter();
 	const searchParams = useSearchParams();
 	const { user, loaded: sessionLoaded } = useSession();
-
-	const {
-		turnstileRef,
-		captchaToken,
-		captchaEnabled,
-		resetCaptcha,
-		handleSuccess,
-		handleError,
-		handleExpire,
-	} = useTurnstile();
 
 	const invitationId = searchParams.get("invitationId");
 	const emailParam = searchParams.get("email");
@@ -88,13 +73,6 @@ export function SignInCard(): React.JSX.Element {
 		try {
 			const { data, error } = await authClient.signIn.email({
 				...values,
-				fetchOptions: captchaEnabled
-					? {
-							headers: {
-								[CAPTCHA_RESPONSE_HEADER]: captchaToken,
-							},
-						}
-					: undefined,
 			});
 			if (error) {
 				throw error;
@@ -112,8 +90,6 @@ export function SignInCard(): React.JSX.Element {
 			// are re-initialized with the correct server-side session data.
 			window.location.href = redirectPath;
 		} catch (e) {
-			resetCaptcha();
-
 			if (
 				e &&
 				typeof e === "object" &&
@@ -224,14 +200,6 @@ export function SignInCard(): React.JSX.Element {
 								</FormItem>
 							)}
 						/>
-						{captchaEnabled && (
-							<TurnstileCaptcha
-								ref={turnstileRef}
-								onSuccess={handleSuccess}
-								onError={handleError}
-								onExpire={handleExpire}
-							/>
-						)}
 						{methods.formState.isSubmitted &&
 							methods.formState.errors.root?.message && (
 								<Alert variant="destructive">
@@ -274,10 +242,7 @@ export function SignInCard(): React.JSX.Element {
 							className="w-full"
 							loading={methods.formState.isSubmitting}
 							type="submit"
-							disabled={
-								methods.formState.isSubmitting ||
-								(captchaEnabled && !captchaToken)
-							}
+							disabled={methods.formState.isSubmitting}
 						>
 							Sign in
 						</Button>
