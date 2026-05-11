@@ -35,7 +35,7 @@ export default async function FeesPage(): Promise<React.JSX.Element> {
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "dashboard", href: "/dashboard" },
+							{ label: "life-star-hostel", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
 							{ label: "Fee Payments" },
 						]}
