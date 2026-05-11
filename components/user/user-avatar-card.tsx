@@ -24,6 +24,7 @@ export function UserAvatarCard(): React.JSX.Element {
 				<UserAvatarUpload
 					onError={() => {
 						toast.error("Could not update avatar");
+						console.log("this is front end error");
 					}}
 					onSuccess={() => {
 						toast.success("Avatar was updated successfully");
