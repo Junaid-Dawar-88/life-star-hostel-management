@@ -257,6 +257,7 @@ model FeePayment {
 model FoodMenu {
     id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     organizationId String   @map("organization_id") @db.Uuid
+    dayOfWeek      Int      @default(0) @map("day_of_week")
     mealType       String   @map("meal_type") @db.Text
     items          String   @db.Text
     startTime      String   @map("start_time") @db.Text
@@ -267,7 +268,8 @@ model FoodMenu {
 
     organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    @@unique([organizationId, mealType], map: "food_menu_org_meal_type_idx")
+    @@unique([organizationId, dayOfWeek, mealType], map: "food_menu_org_day_meal_type_idx")
     @@index([organizationId], map: "food_menu_organization_id_idx")
+    @@index([organizationId, dayOfWeek], map: "food_menu_organization_day_idx")
     @@map("food_menu")
 }

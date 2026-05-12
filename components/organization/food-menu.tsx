@@ -24,10 +24,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useZodForm } from "@/hooks/use-zod-form";
 import type { MealType } from "@/schemas/organization-food-menu-schemas";
 import { trpc } from "@/trpc/client";
+
+const DAYS = [
+	{ label: "Mon", fullLabel: "Monday", value: 0 },
+	{ label: "Tue", fullLabel: "Tuesday", value: 1 },
+	{ label: "Wed", fullLabel: "Wednesday", value: 2 },
+	{ label: "Thu", fullLabel: "Thursday", value: 3 },
+	{ label: "Fri", fullLabel: "Friday", value: 4 },
+	{ label: "Sat", fullLabel: "Saturday", value: 5 },
+	{ label: "Sun", fullLabel: "Sunday", value: 6 },
+] as const;
 
 const MEAL_CONFIG: Record<
 	MealType,
@@ -65,19 +76,24 @@ type EditMenuValues = z.infer<typeof editMenuSchema>;
 
 type FoodMenuRecord = {
 	id: string;
-	mealType: MealType;
+	dayOfWeek: number;
+	mealType: string;
 	items: string;
 	startTime: string;
 	endTime: string;
 };
 
 function EditMenuDialog({
+	dayOfWeek,
+	dayLabel,
 	mealType,
 	existing,
 	open,
 	onOpenChange,
 	onSuccess,
 }: {
+	dayOfWeek: number;
+	dayLabel: string;
 	mealType: MealType;
 	existing: FoodMenuRecord | null | undefined;
 	open: boolean;
@@ -96,7 +112,7 @@ function EditMenuDialog({
 
 	const upsert = trpc.organization.foodMenu.upsert.useMutation({
 		onSuccess: () => {
-			toast.success(`${config.label} menu updated`);
+			toast.success(`${dayLabel} ${config.label} menu updated`);
 			onSuccess();
 			onOpenChange(false);
 		},
@@ -106,7 +122,7 @@ function EditMenuDialog({
 	});
 
 	function onSubmit(values: EditMenuValues) {
-		upsert.mutate({ mealType, ...values });
+		upsert.mutate({ dayOfWeek, mealType, ...values });
 	}
 
 	return (
@@ -114,11 +130,11 @@ function EditMenuDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{config.emoji} Edit {config.label} Menu
+						{config.emoji} {dayLabel} — {config.label}
 					</DialogTitle>
 					<DialogDescription>
-						Set the food items and serving time for {config.label.toLowerCase()}
-						.
+						Set food items and serving time for {config.label.toLowerCase()} on{" "}
+						{dayLabel}.
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
@@ -260,8 +276,42 @@ function MealCard({
 	);
 }
 
+type EditingState = { dayOfWeek: number; mealType: MealType } | null;
+
+function DayPanel({
+	dayOfWeek,
+	dayLabel,
+	menus,
+	onEdit,
+}: {
+	dayOfWeek: number;
+	dayLabel: string;
+	menus: FoodMenuRecord[];
+	onEdit: (state: EditingState) => void;
+}) {
+	const menuByMeal = (mealType: MealType) =>
+		menus.find((m) => m.dayOfWeek === dayOfWeek && m.mealType === mealType) ??
+		null;
+
+	return (
+		<div className="grid gap-4 sm:grid-cols-3">
+			{MEAL_TYPES.map((mealType) => (
+				<MealCard
+					key={mealType}
+					mealType={mealType}
+					menu={menuByMeal(mealType)}
+					onEdit={() => onEdit({ dayOfWeek, mealType })}
+				/>
+			))}
+		</div>
+	);
+}
+
 export function FoodMenu() {
-	const [editingMeal, setEditingMeal] = useState<MealType | null>(null);
+	const [editing, setEditing] = useState<EditingState>(null);
+	const today = new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+	// Convert JS day (0=Sun) to our day (0=Mon): (day + 6) % 7
+	const todayIndex = (today + 6) % 7;
 
 	const {
 		data: menus,
@@ -269,41 +319,68 @@ export function FoodMenu() {
 		refetch,
 	} = trpc.organization.foodMenu.listAll.useQuery();
 
-	const menuByType = (mealType: MealType) =>
-		(menus as FoodMenuRecord[] | undefined)?.find(
-			(m) => m.mealType === mealType,
-		) ?? null;
+	const allMenus = (menus as FoodMenuRecord[] | undefined) ?? [];
 
 	if (isLoading) {
 		return (
-			<div className="grid gap-4 sm:grid-cols-3">
-				{MEAL_TYPES.map((t) => (
-					<Skeleton key={t} className="h-44 rounded-xl" />
-				))}
+			<div className="space-y-4">
+				<Skeleton className="h-10 w-full rounded-lg" />
+				<div className="grid gap-4 sm:grid-cols-3">
+					{MEAL_TYPES.map((t) => (
+						<Skeleton key={t} className="h-44 rounded-xl" />
+					))}
+				</div>
 			</div>
 		);
 	}
 
+	const editingMenu = editing
+		? (allMenus.find(
+				(m) =>
+					m.dayOfWeek === editing.dayOfWeek && m.mealType === editing.mealType,
+			) ?? null)
+		: null;
+
+	const editingDay = editing
+		? DAYS.find((d) => d.value === editing.dayOfWeek)
+		: null;
+
 	return (
 		<>
-			<div className="grid gap-4 sm:grid-cols-3">
-				{MEAL_TYPES.map((mealType) => (
-					<MealCard
-						key={mealType}
-						mealType={mealType}
-						menu={menuByType(mealType)}
-						onEdit={() => setEditingMeal(mealType)}
-					/>
-				))}
-			</div>
+			<Tabs defaultValue={String(todayIndex)}>
+				<TabsList className="grid grid-cols-7 w-full">
+					{DAYS.map((day) => (
+						<TabsTrigger key={day.value} value={String(day.value)}>
+							{day.label}
+						</TabsTrigger>
+					))}
+				</TabsList>
 
-			{editingMeal && (
+				{DAYS.map((day) => (
+					<TabsContent
+						key={day.value}
+						value={String(day.value)}
+						className="mt-4"
+					>
+						<DayPanel
+							dayOfWeek={day.value}
+							dayLabel={day.fullLabel}
+							menus={allMenus}
+							onEdit={setEditing}
+						/>
+					</TabsContent>
+				))}
+			</Tabs>
+
+			{editing && editingDay && (
 				<EditMenuDialog
-					mealType={editingMeal}
-					existing={menuByType(editingMeal)}
-					open={!!editingMeal}
+					dayOfWeek={editing.dayOfWeek}
+					dayLabel={editingDay.fullLabel}
+					mealType={editing.mealType}
+					existing={editingMenu}
+					open={!!editing}
 					onOpenChange={(open) => {
-						if (!open) setEditingMeal(null);
+						if (!open) setEditing(null);
 					}}
 					onSuccess={() => refetch()}
 				/>

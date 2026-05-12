@@ -33,7 +33,10 @@
 			"Bash(findstr \"8.15\")",
 			"Bash(pnpm install *)",
 			"Bash(Sort-Object Name)",
-			"Bash(node -e \"const pkg = require\\('./node_modules/.pnpm/@trpc+react-query@11.4.0_@tanstack+react-query@5.75.6_react@19.1.0__react@19.1.0_zod@3.25.36/node_modules/@trpc/react-query/package.json'\\); console.log\\(pkg.version\\)\")"
+			"Bash(node -e \"const pkg = require\\('./node_modules/.pnpm/@trpc+react-query@11.4.0_@tanstack+react-query@5.75.6_react@19.1.0__react@19.1.0_zod@3.25.36/node_modules/@trpc/react-query/package.json'\\); console.log\\(pkg.version\\)\")",
+			"Bash(findstr /i \"S3\\\\|BUCKET\\\\|STORAGE\\\\|IMAGE\")",
+			"PowerShell(git add \"app/\\(marketing\\)/page.tsx\" \"components/logo.tsx\" \"components/marketing/sections/contact-section.tsx\" \"components/marketing/sections/features-section.tsx\" \"components/marketing/sections/hero-section.tsx\" \"components/marketing/sections/logo-cloud-section.tsx\" \"components/marketing/sections/stats-section.tsx\" \"components/marketing/sections/testimonials-section.tsx\" \"config/app.config.ts\")",
+			"PowerShell(git push origin main)"
 		]
 	}
 }

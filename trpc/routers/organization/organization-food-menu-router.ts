@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import {
+	getDayMenuSchema,
 	getMealMenuSchema,
 	upsertFoodMenuSchema,
 } from "@/schemas/organization-food-menu-schemas";
@@ -9,8 +10,20 @@ export const organizationFoodMenuRouter = createTRPCRouter({
 	listAll: protectedOrganizationProcedure.query(async ({ ctx }) => {
 		return prisma.foodMenu.findMany({
 			where: { organizationId: ctx.organization.id },
+			orderBy: [{ dayOfWeek: "asc" }, { mealType: "asc" }],
 		});
 	}),
+
+	getByDay: protectedOrganizationProcedure
+		.input(getDayMenuSchema)
+		.query(async ({ ctx, input }) => {
+			return prisma.foodMenu.findMany({
+				where: {
+					organizationId: ctx.organization.id,
+					dayOfWeek: input.dayOfWeek,
+				},
+			});
+		}),
 
 	getByMealType: protectedOrganizationProcedure
 		.input(getMealMenuSchema)
@@ -18,6 +31,7 @@ export const organizationFoodMenuRouter = createTRPCRouter({
 			return prisma.foodMenu.findFirst({
 				where: {
 					organizationId: ctx.organization.id,
+					dayOfWeek: input.dayOfWeek,
 					mealType: input.mealType,
 				},
 			});
@@ -29,6 +43,7 @@ export const organizationFoodMenuRouter = createTRPCRouter({
 			const existing = await prisma.foodMenu.findFirst({
 				where: {
 					organizationId: ctx.organization.id,
+					dayOfWeek: input.dayOfWeek,
 					mealType: input.mealType,
 				},
 			});
@@ -47,6 +62,7 @@ export const organizationFoodMenuRouter = createTRPCRouter({
 			return prisma.foodMenu.create({
 				data: {
 					organizationId: ctx.organization.id,
+					dayOfWeek: input.dayOfWeek,
 					mealType: input.mealType,
 					items: input.items,
 					startTime: input.startTime,
