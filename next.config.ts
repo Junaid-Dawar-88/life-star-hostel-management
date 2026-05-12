@@ -1,6 +1,5 @@
 import { withContentCollections } from "@content-collections/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
-import { withSentryConfig } from "@sentry/nextjs";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
@@ -64,30 +63,6 @@ const bundleAnalyzerConfig =
 		? withBundleAnalyzer({ enabled: true })(nextConfig)
 		: nextConfig;
 
-const vercelOrCI = !!(process.env.VERCEL === "1" || process.env.CI);
-
 const withMDX = createMDX();
 
-export default withContentCollections(
-	withMDX(
-		process.env.VERCEL_ENV === "production"
-			? withSentryConfig(bundleAnalyzerConfig, {
-					org: process.env.SENTRY_ORG,
-					project: process.env.SENTRY_PROJECT,
-					authToken: process.env.SENTRY_AUTH_TOKEN,
-					silent: !vercelOrCI,
-					sourcemaps: {
-						disable: !vercelOrCI,
-					},
-					tunnelRoute: "/monitoring",
-					widenClientFileUpload: true,
-					telemetry: false,
-					reactComponentAnnotation: {
-						enabled: true,
-					},
-					// Avoid cluttering traces with a ton of middleware spans.
-					autoInstrumentMiddleware: false,
-				})
-			: bundleAnalyzerConfig,
-	),
-);
+export default withContentCollections(withMDX(bundleAnalyzerConfig));
