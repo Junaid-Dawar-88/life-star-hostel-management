@@ -1,15 +1,20 @@
 import { getBaseUrl } from "@/lib/utils";
 
 export const appConfig = {
-	appName: "Acme",
-	description: `Acme's description`,
+	appName: "Life Star Hostel",
+	description:
+		"Modern hostel management system — simplifying bookings, resident management, billing, and daily operations for hostels of all sizes.",
 	baseUrl: getBaseUrl(),
 	// Contact information (displayed on contact page)
 	contact: {
 		enabled: true,
-		email: "hello@yourdomain.com",
-		phone: "(123) 456-7890",
-		address: "123 Main St, San Francisco, CA",
+		email: "inamabad.2345@gmail.com",
+		phone: "0349-7892511",
+		address: "Life Star Hostel, Islamabad, Pakistan",
+		warden: {
+			name: "Zeshan Khan",
+			role: "Warden",
+		},
 	},
 	// Site sections - enable/disable major parts of the site
 	site: {
@@ -52,6 +57,10 @@ export type ContactConfig = {
 	email: string;
 	phone: string;
 	address: string;
+	warden?: {
+		name: string;
+		role: string;
+	};
 };
 
 export type SiteConfig = {

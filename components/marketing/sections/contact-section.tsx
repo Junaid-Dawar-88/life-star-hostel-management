@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MailIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from "lucide-react";
 import type { ElementType } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -99,8 +99,8 @@ export function ContactSection() {
 					</h1>
 					<div className="max-w-3xl text-lg leading-8 text-marketing-fg-muted">
 						<p>
-							Questions about pricing, features or enterprise plans? Our team is
-							ready to help.
+							Have questions about the hostel? Reach out to our warden Zeshan
+							Khan directly — we're here to help.
 						</p>
 					</div>
 				</div>
@@ -124,8 +124,8 @@ export function ContactSection() {
 								</h2>
 								<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
 									<p>
-										Drop us a message. We typically respond within 24 hours on
-										business days.
+										Send us a message and Zeshan Khan (Warden) will get back to
+										you within 24 hours.
 									</p>
 								</div>
 							</div>
@@ -135,6 +135,12 @@ export function ContactSection() {
 									Contact details
 								</h3>
 								<div className="flex flex-col gap-3">
+									{appConfig.contact.warden && (
+										<ContactInfo
+											icon={UserIcon}
+											text={`${appConfig.contact.warden.name} — ${appConfig.contact.warden.role}`}
+										/>
+									)}
 									<ContactInfo
 										icon={PhoneIcon}
 										text={appConfig.contact.phone}

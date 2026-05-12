@@ -73,11 +73,11 @@ function FeatureCard({ feature }: { feature: Feature }) {
 export function FeaturesSection() {
 	const features: Feature[] = [
 		{
-			title: "Auth & Organizations",
+			title: "Room & Bed Management",
 			description:
-				"Secure authentication with Better Auth. Built-in support for multi-tenant organizations, member invitations and granular role-based permissions.",
-			link: "#",
-			linkText: "Explore Auth",
+				"Track every room and bed in real time. Manage occupancy, set pricing per room type, and instantly see which rooms are available, occupied, or under maintenance.",
+			link: "/auth/sign-up",
+			linkText: "Start Managing Rooms",
 			color: "blue",
 			placement: "bottom-right",
 			image: {
@@ -88,12 +88,42 @@ export function FeaturesSection() {
 			},
 		},
 		{
-			title: "AI & Credits System",
+			title: "Resident & Booking Management",
 			description:
-				"Launch AI-powered features instantly. Includes a complete chatbot UI, OpenAI integration and a flexible credit consumption system.",
-			link: "#",
-			linkText: "Review Stack",
+				"Maintain complete resident profiles with CNIC, contact info, and stay history. Handle check-ins, check-outs, extensions, and booking requests from one central dashboard.",
+			link: "/auth/sign-up",
+			linkText: "Manage Residents",
+			color: "green",
+			placement: "bottom-left",
+			image: {
+				light: "/marketing/placeholders/placeholder-light.webp",
+				dark: "/marketing/placeholders/placeholder-dark.webp",
+				width: 600,
+				height: 400,
+			},
+		},
+		{
+			title: "Billing & Payment Tracking",
+			description:
+				"Automate monthly rent invoices, record manual payments, and track outstanding dues. Get a clear financial overview with detailed payment history for every resident.",
+			link: "/auth/sign-up",
+			linkText: "See Billing Features",
 			color: "purple",
+			placement: "bottom-right",
+			image: {
+				light: "/marketing/placeholders/placeholder-light.webp",
+				dark: "/marketing/placeholders/placeholder-dark.webp",
+				width: 600,
+				height: 400,
+			},
+		},
+		{
+			title: "Staff & Role Management",
+			description:
+				"Add staff members with controlled access. Assign roles — manager, receptionist, accountant — so everyone sees only what they need to do their job.",
+			link: "/auth/sign-up",
+			linkText: "Explore Roles",
+			color: "brown",
 			placement: "bottom-left",
 			image: {
 				light: "/marketing/placeholders/placeholder-light.webp",
@@ -111,7 +141,7 @@ export function FeaturesSection() {
 				<div className="flex max-w-2xl flex-col gap-6">
 					<div className="flex flex-col gap-2">
 						<div className="text-sm font-semibold leading-7 text-marketing-fg-muted">
-							Powerful Features
+							Everything You Need
 						</div>
 						<h2
 							className={cn(
@@ -120,13 +150,14 @@ export function FeaturesSection() {
 								"sm:text-5xl sm:leading-14",
 							)}
 						>
-							The complete SaaS foundation
+							Built for hostel operations
 						</h2>
 					</div>
 					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
 						<p>
-							Everything you need to build a production-ready application. From
-							authentication to payments, it's all included.
+							From the first check-in to the final payment — Life Star Hostel
+							Management handles every aspect of running your hostel so you can
+							focus on your residents.
 						</p>
 					</div>
 				</div>

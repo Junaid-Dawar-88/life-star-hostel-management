@@ -70,7 +70,7 @@ export function HeroSection() {
 					<div className="flex flex-col items-start gap-6">
 						{/* Announcement Pill */}
 						<Link
-							href="#"
+							href="#features"
 							className={cn(
 								"relative inline-flex max-w-full items-center gap-3 overflow-hidden rounded-md px-3.5 py-2 text-sm",
 								"bg-marketing-card",
@@ -80,11 +80,11 @@ export function HeroSection() {
 							)}
 						>
 							<span className="truncate text-pretty sm:truncate">
-								Introducing our latest features
+								Complete hostel management in one platform
 							</span>
 							<span className="hidden h-3 w-px bg-marketing-card-hover sm:block" />
 							<span className="inline-flex shrink-0 items-center gap-1 font-semibold">
-								Learn more
+								Explore features
 								<ChevronRightIcon className="size-3" />
 							</span>
 						</Link>
@@ -98,15 +98,16 @@ export function HeroSection() {
 								"lg:text-[5rem] lg:leading-20",
 							)}
 						>
-							Production-ready SaaS. Right out of the box.
+							Modern Hostel Management. Simplified.
 						</h1>
 
 						{/* Description */}
 						<div className="flex max-w-3xl flex-col gap-4 text-lg leading-8 text-marketing-fg-muted">
 							<p>
-								Demo application built with Achromatic. Next.js 16 starter kit
-								with auth, organizations, subscriptions, credits, AI chatbot and
-								admin panel - powered by Better Auth and tRPC.
+								Life Star Hostel Management is an all-in-one platform for
+								managing rooms, residents, bookings, and billing — designed for
+								hostel owners and managers who want full control without the
+								complexity.
 							</p>
 						</div>
 
@@ -119,7 +120,7 @@ export function HeroSection() {
 									"bg-marketing-accent text-marketing-accent-fg hover:bg-marketing-accent-hover",
 								)}
 							>
-								Get Started
+								Get Started Free
 							</Link>
 							<Link
 								href="/contact"
@@ -128,7 +129,7 @@ export function HeroSection() {
 									"text-marketing-fg hover:bg-marketing-card-hover",
 								)}
 							>
-								Book a Demo
+								Contact Us
 								<ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
 							</Link>
 						</div>

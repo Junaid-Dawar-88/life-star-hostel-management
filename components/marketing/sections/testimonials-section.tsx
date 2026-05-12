@@ -41,52 +41,52 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export function TestimonialsSection() {
 	const testimonials: Testimonial[] = [
 		{
-			name: "Sarah Chen",
-			role: "CTO",
-			company: "TechStart",
+			name: "Ahmed Raza",
+			role: "Owner",
+			company: "Al-Noor Hostel, Lahore",
 			quote:
-				"This platform has completely transformed how our team works. We're more productive than ever.",
-			avatar: "/marketing/avatars/woman-44.jpg",
-		},
-		{
-			name: "Marcus Johnson",
-			role: "Founder",
-			company: "GrowthLabs",
-			quote:
-				"The best investment we've made. It scales with us and just works beautifully.",
+				"Managing 80 rooms used to be a nightmare. Life Star Hostel Management made it simple — I can see everything from one screen.",
 			avatar: "/marketing/avatars/man-32.jpg",
 		},
 		{
-			name: "Emily Rodriguez",
-			role: "Operations Director",
-			company: "Innovate Co",
+			name: "Fatima Khan",
+			role: "Manager",
+			company: "Gulshan Hostel, Karachi",
 			quote:
-				"Onboarding was seamless. Our team was up and running within days, not weeks.",
-			avatar: "/marketing/avatars/woman-68.jpg",
+				"The billing and payment tracking feature saved us hours every month. Our accounts are always up to date now.",
+			avatar: "/marketing/avatars/woman-44.jpg",
 		},
 		{
-			name: "David Kim",
-			role: "Product Lead",
-			company: "BuildFast",
+			name: "Usman Tariq",
+			role: "Administrator",
+			company: "Star Boys Hostel, Islamabad",
 			quote:
-				"The insights and analytics have changed how we make decisions. Highly recommended.",
+				"Check-in and check-out used to be on paper. Now it's digital, instant, and error-free. Our residents love it too.",
 			avatar: "/marketing/avatars/man-75.jpg",
 		},
 		{
-			name: "Priya Sharma",
-			role: "Engineering Manager",
-			company: "DevFlow",
+			name: "Sana Malik",
+			role: "Owner",
+			company: "Zara Girls Hostel, Rawalpindi",
 			quote:
-				"Integration was effortless. Everything just works together perfectly.",
+				"The role system is brilliant. My receptionist only sees bookings, my accountant only sees payments. Clean and secure.",
 			avatar: "/marketing/avatars/woman-26.jpg",
 		},
 		{
-			name: "Alex Turner",
-			role: "Team Lead",
-			company: "AgileWorks",
+			name: "Bilal Hussain",
+			role: "Operations Manager",
+			company: "City View Hostel, Faisalabad",
 			quote:
-				"Outstanding support. Any question we've had was answered quickly and thoroughly.",
+				"We went from spreadsheets to a proper system in one day. The onboarding was incredibly smooth.",
 			avatar: "/marketing/avatars/man-46.jpg",
+		},
+		{
+			name: "Ayesha Noor",
+			role: "Director",
+			company: "Noor Students Hostel, Multan",
+			quote:
+				"Outstanding support team. Every question I had during setup was answered within hours. Highly recommended.",
+			avatar: "/marketing/avatars/woman-68.jpg",
 		},
 	];
 
@@ -103,13 +103,13 @@ export function TestimonialsSection() {
 								"sm:text-5xl sm:leading-14",
 							)}
 						>
-							Loved by teams everywhere
+							Loved by hostel managers everywhere
 						</h2>
 					</div>
 					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
 						<p>
-							See what our customers have to say about their experience with our
-							platform.
+							Hear from hostel owners and managers across Pakistan who run their
+							operations on Life Star Hostel Management.
 						</p>
 					</div>
 				</div>

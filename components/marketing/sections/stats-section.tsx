@@ -11,24 +11,24 @@ interface Stat {
 export function StatsSection() {
 	const stats: Stat[] = [
 		{
-			value: "10K+",
-			label: "Active Users",
-			description: "Growing community worldwide",
+			value: "500+",
+			label: "Rooms Managed",
+			description: "Across multiple hostel branches",
+		},
+		{
+			value: "2,000+",
+			label: "Residents Served",
+			description: "Happy residents since day one",
 		},
 		{
 			value: "99.9%",
 			label: "Uptime",
-			description: "Reliable infrastructure you can trust",
-		},
-		{
-			value: "50+",
-			label: "Integrations",
-			description: "Connect with your favorite tools",
+			description: "Reliable, always-on platform",
 		},
 		{
 			value: "24/7",
 			label: "Support",
-			description: "Help when you need it most",
+			description: "Help whenever you need it",
 		},
 	];
 
@@ -48,13 +48,13 @@ export function StatsSection() {
 								"sm:text-5xl sm:leading-14",
 							)}
 						>
-							Trusted by teams worldwide
+							Trusted by hostel managers
 						</h2>
 					</div>
 					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
 						<p>
-							Join thousands of companies that rely on our platform to power
-							their business every day.
+							From single-branch hostels to large multi-location operations —
+							Life Star Hostel Management keeps everything running smoothly.
 						</p>
 					</div>
 				</div>

@@ -69,42 +69,48 @@ export default async function HomePage() {
 		headline: "Questions & Answers",
 		items: [
 			{
-				question: "How do I get started?",
+				question: "How do I add residents and rooms?",
 				answer:
-					"Getting started is simple. Sign up for a free account, complete the onboarding process and you'll be ready to go in minutes.",
+					"After signing up, you can set up your hostel by adding rooms, bed types, and pricing. Then start adding residents with their details, assign them to a room, and track everything from the dashboard.",
 			},
 			{
-				question: "Is there a free trial available?",
+				question: "Can I manage multiple hostel branches?",
 				answer:
-					"Yes, we offer a 14-day free trial with full access to all features. No credit card required to start.",
+					"Yes. Life Star Hostel Management supports multiple organizations (branches). You can create separate workspaces for each branch and switch between them with a single account.",
 			},
 			{
-				question: "Can I cancel my subscription anytime?",
+				question: "How does billing and payment tracking work?",
 				answer:
-					"Absolutely. You can cancel your subscription at any time from your account settings. No questions asked.",
+					"The system lets you set monthly rent per resident, generate invoices, and record payments. Outstanding dues are automatically flagged so you never miss a payment.",
 			},
 			{
-				question: "Do you offer customer support?",
+				question: "Can I control what my staff can see?",
 				answer:
-					"We provide dedicated customer support via email and live chat. Our team typically responds within a few hours.",
+					"Absolutely. You can invite staff members and assign roles — manager, receptionist, or accountant — with different levels of access so everyone sees only what they need.",
 			},
 			{
 				question: "Is my data secure?",
 				answer:
-					"Security is our top priority. We use industry-standard encryption and follow best practices to keep your data safe.",
+					"Yes. All data is encrypted in transit and at rest. We use industry-standard security practices and your resident data is never shared with third parties.",
+			},
+			{
+				question: "Do you offer customer support?",
+				answer:
+					"We provide dedicated support via email. Our team typically responds within a few hours to help you get the most out of the platform.",
 			},
 		],
 	};
 
 	const ctaContent = {
-		headline: "Ready to get started?",
-		description: "Create your free account today. No credit card required.",
+		headline: "Ready to manage your hostel smarter?",
+		description:
+			"Create your free account today and get your hostel up and running in minutes.",
 		primaryCta: {
-			text: "Start Free Trial",
+			text: "Get Started Free",
 			href: "/auth/sign-up",
 		},
 		secondaryCta: {
-			text: "Contact Sales",
+			text: "Contact Us",
 			href: "/contact",
 		},
 	};
