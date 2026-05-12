@@ -31,6 +31,7 @@ import {
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
 import { getAuthErrorMessage } from "@/lib/auth/constants";
+import { getBaseUrl } from "@/lib/utils";
 import { forgotPasswordSchema } from "@/schemas/auth-schemas";
 
 export function ForgotPasswordCard(): React.JSX.Element {
@@ -46,7 +47,7 @@ export function ForgotPasswordCard(): React.JSX.Element {
 		try {
 			const redirectTo = new URL(
 				"/auth/reset-password",
-				window.location.origin,
+				getBaseUrl(),
 			).toString();
 
 			const { error } = await authClient.requestPasswordReset({

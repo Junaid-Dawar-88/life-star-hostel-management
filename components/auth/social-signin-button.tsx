@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { authConfig } from "@/config/auth.config";
 import { authClient } from "@/lib/auth/client";
 import { oAuthProviders } from "@/lib/auth/oauth-providers";
-import { cn } from "@/lib/utils";
+import { cn, getBaseUrl } from "@/lib/utils";
 
 export type SocialSigninButtonProps =
 	React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -25,7 +25,7 @@ export function SocialSigninButton({
 		: authConfig.redirectAfterSignIn;
 
 	const onSignin = () => {
-		const callbackURL = new URL(redirectPath, window.location.origin);
+		const callbackURL = new URL(redirectPath, getBaseUrl());
 		authClient.signIn.social({
 			provider,
 			callbackURL: callbackURL.toString(),

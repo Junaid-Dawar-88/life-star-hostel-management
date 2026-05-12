@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
+import { getBaseUrl } from "@/lib/utils";
 
 export function SetPasswordCard(): React.JSX.Element {
 	const { user } = useSession();
@@ -27,7 +28,7 @@ export function SetPasswordCard(): React.JSX.Element {
 		await authClient.requestPasswordReset(
 			{
 				email: user.email,
-				redirectTo: `${window.location.origin}/auth/reset-password`,
+				redirectTo: `${getBaseUrl()}/auth/reset-password`,
 			},
 			{
 				onSuccess: () => {

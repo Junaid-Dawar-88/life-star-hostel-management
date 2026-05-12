@@ -38,6 +38,7 @@ import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
 import { getAuthErrorMessage } from "@/lib/auth/constants";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
+import { getBaseUrl } from "@/lib/utils";
 import { signUpSchema } from "@/schemas/auth-schemas";
 
 export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
@@ -62,10 +63,7 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 
 	const onSubmit = methods.handleSubmit(async ({ email, password, name }) => {
 		try {
-			const callbackURL = new URL(
-				redirectPath,
-				window.location.origin,
-			).toString();
+			const callbackURL = new URL(redirectPath, getBaseUrl()).toString();
 
 			const { error } = await authClient.signUp.email({
 				email,

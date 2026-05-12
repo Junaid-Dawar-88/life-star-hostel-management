@@ -40,12 +40,19 @@ import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
 import { getAuthErrorMessage } from "@/lib/auth/constants";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
+import { getBaseUrl } from "@/lib/utils";
 import { signInSchema } from "@/schemas/auth-schemas";
 
 export function SignInCard(): React.JSX.Element {
 	const router = useProgressRouter();
 	const searchParams = useSearchParams();
 	const { user, loaded: sessionLoaded } = useSession();
+	const [unverifiedEmail, setUnverifiedEmail] = React.useState<string | null>(
+		null,
+	);
+	const [resendingVerification, setResendingVerification] =
+		React.useState(false);
+	const [verificationResent, setVerificationResent] = React.useState(false);
 
 	const invitationId = searchParams.get("invitationId");
 	const emailParam = searchParams.get("email");
@@ -111,6 +118,16 @@ export function SignInCard(): React.JSX.Element {
 				methods.setError("root", {
 					message: `USER_BANNED|${e.message}`,
 				});
+			} else if (
+				e &&
+				typeof e === "object" &&
+				"code" in e &&
+				e.code === "EMAIL_NOT_VERIFIED"
+			) {
+				setUnverifiedEmail(values.email);
+				methods.setError("root", {
+					message: "EMAIL_NOT_VERIFIED",
+				});
 			} else {
 				methods.setError("root", {
 					message: getAuthErrorMessage(
@@ -122,6 +139,20 @@ export function SignInCard(): React.JSX.Element {
 			}
 		}
 	});
+
+	const handleResendVerification = async () => {
+		if (!unverifiedEmail) return;
+		setResendingVerification(true);
+		try {
+			await authClient.sendVerificationEmail({
+				email: unverifiedEmail,
+				callbackURL: new URL(redirectPath, getBaseUrl()).toString(),
+			});
+			setVerificationResent(true);
+		} finally {
+			setResendingVerification(false);
+		}
+	};
 
 	return (
 		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
@@ -202,10 +233,41 @@ export function SignInCard(): React.JSX.Element {
 						/>
 						{methods.formState.isSubmitted &&
 							methods.formState.errors.root?.message && (
-								<Alert variant="destructive">
+								<Alert
+									variant={
+										methods.formState.errors.root.message ===
+										"EMAIL_NOT_VERIFIED"
+											? "info"
+											: "destructive"
+									}
+								>
 									<AlertDescription>
 										{(() => {
 											const message = methods.formState.errors.root.message;
+											if (message === "EMAIL_NOT_VERIFIED") {
+												if (verificationResent) {
+													return (
+														<p>
+															Verification email sent. Please check your inbox.
+														</p>
+													);
+												}
+												return (
+													<div className="space-y-2">
+														<p>{getAuthErrorMessage("EMAIL_NOT_VERIFIED")}</p>
+														<button
+															type="button"
+															className="underline text-sm font-medium"
+															disabled={resendingVerification}
+															onClick={handleResendVerification}
+														>
+															{resendingVerification
+																? "Sending…"
+																: "Resend verification email"}
+														</button>
+													</div>
+												);
+											}
 											if (message.startsWith("USER_BANNED|")) {
 												const baseMessage = getAuthErrorMessage("USER_BANNED");
 												const serverMessage = message.replace(

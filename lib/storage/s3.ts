@@ -85,7 +85,7 @@ export async function getSignedUploadUrl(
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: safePath,
-				ContentType: "image/jpeg",
+				ContentType: "image/png",
 			}),
 			{ expiresIn: 60 },
 		);
